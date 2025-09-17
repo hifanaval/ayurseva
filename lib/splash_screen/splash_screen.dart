@@ -1,3 +1,4 @@
+import 'package:ayurseva/constants/global_variables.dart';
 import 'package:ayurseva/constants/icon_class.dart';
 import 'package:ayurseva/constants/image_class.dart';
 import 'package:ayurseva/home_screen/treatments_list_screen.dart';

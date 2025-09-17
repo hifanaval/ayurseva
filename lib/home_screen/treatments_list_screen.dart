@@ -1,3 +1,4 @@
+import 'package:ayurseva/components/custom_button.dart';
 import 'package:ayurseva/components/custom_dropdown.dart';
 import 'package:ayurseva/components/custom_searchbar.dart';
 import 'package:ayurseva/constants/color_class.dart';
@@ -109,19 +110,22 @@ class _TreatmentsListScreenState extends State<TreatmentsListScreen> {
                   // Logout button
                   GestureDetector(
                     onTap: () {
-                      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                      final authProvider = Provider.of<AuthProvider>(
+                        context,
+                        listen: false,
+                      );
                       AppUtils.showLogoutConfirmation(context, () async {
                         await authProvider.logout(context);
                       });
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                                                  color: ColorClass.primaryColor,
-
-                        ),
+                        border: Border.all(color: ColorClass.primaryColor),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -134,7 +138,9 @@ class _TreatmentsListScreenState extends State<TreatmentsListScreen> {
                           // const SizedBox(width: 4),
                           Text(
                             'Logout',
-                            style: TextStyleClass.bodySmall(ColorClass.primaryColor),
+                            style: TextStyleClass.bodySmall(
+                              ColorClass.primaryColor,
+                            ),
                           ),
                         ],
                       ),
@@ -211,26 +217,10 @@ class _TreatmentsListScreenState extends State<TreatmentsListScreen> {
             ),
 
             // Register Now Button
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _handleRegisterNow,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorClass.primaryColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Register Now',
-                    style: TextStyleClass.buttonLarge(ColorClass.white),
-                  ),
-                ),
-              ),
+            CustomButton(
+              text: 'Register Now',
+              onPressed: () {},
+              isLoading: false,
             ),
           ],
         ),

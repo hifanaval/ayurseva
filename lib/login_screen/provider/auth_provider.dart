@@ -193,6 +193,7 @@ setLoading(bool value) {
   Future<bool> hasValidToken() async {
     try {
       final token = await SharedUtils.getString(StringClass.token);
+      debugPrint('Token: $token');
       return token.isNotEmpty;
     } catch (e) {
       debugPrint('Error checking token: $e');
