@@ -15,7 +15,7 @@ class AuthProvider extends ChangeNotifier {
   // Controllers
   final TextEditingController emailController = TextEditingController(text:'test_user');
   final TextEditingController passwordController = TextEditingController(text:'12345678');
-  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>(debugLabel: 'AuthFormKey');
 
   LoginResponseModel? loginResponseModel;
 

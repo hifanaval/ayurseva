@@ -2,7 +2,6 @@ import 'package:ayurseva/components/custom_dropdown.dart';
 import 'package:ayurseva/constants/color_class.dart';
 import 'package:ayurseva/constants/textstyle_class.dart';
 import 'package:ayurseva/screens/registration_screen/models/selected_treatment_model.dart';
-import 'package:ayurseva/screens/registration_screen/registration_screen.dart';
 import 'package:ayurseva/screens/registration_screen/provider/registration_provider.dart';
 import 'package:ayurseva/screens/registration_screen/provider/treatment_type_provider.dart';
 import 'package:flutter/material.dart';

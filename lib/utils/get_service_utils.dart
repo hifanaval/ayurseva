@@ -1,6 +1,5 @@
 // get_service_util.dart
 import 'package:ayurseva/constants/string_class.dart';
-import 'package:ayurseva/screens/login_screen/provider/auth_provider.dart';
 import 'package:ayurseva/utils/app_utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';

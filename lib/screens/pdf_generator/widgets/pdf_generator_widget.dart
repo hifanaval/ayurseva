@@ -1,19 +1,78 @@
 import 'dart:typed_data';
 import 'package:ayurseva/screens/pdf_generator/widgets/full_screen_pdf_viewer_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:ayurseva/screens/pdf_generator/models/invoice_data_model.dart';
 import 'package:ayurseva/constants/string_class.dart';
+import 'package:ayurseva/constants/icon_class.dart';
+import 'package:ayurseva/constants/color_class.dart';
+import 'package:ayurseva/constants/textstyle_class.dart';
 
 /// PDF Generator Widget containing all PDF generation logic
 class PdfGeneratorWidget {
   
+  /// Load logo image from assets
+  static Future<pw.ImageProvider> _loadLogoImage() async {
+    try {
+      final logoData = await rootBundle.load(IconClass.logo);
+      return pw.MemoryImage(logoData.buffer.asUint8List());
+    } catch (e) {
+      debugPrint('PdfGeneratorWidget: Error loading logo - $e');
+      // Fallback to a simple text-based logo if image loading fails
+      return pw.MemoryImage(Uint8List(0));
+    }
+  }
+
+  /// Convert Flutter TextStyle to PDF TextStyle
+  static pw.TextStyle _convertToPdfTextStyle(TextStyle flutterStyle) {
+    return pw.TextStyle(
+      fontSize: flutterStyle.fontSize,
+      fontWeight: _convertFontWeight(flutterStyle.fontWeight),
+      color: _convertColor(flutterStyle.color),
+      font: pw.Font.helvetica(), // Using helvetica as fallback since Poppins might not be available in PDF
+    );
+  }
+
+  /// Convert Flutter FontWeight to PDF FontWeight
+  static pw.FontWeight _convertFontWeight(FontWeight? fontWeight) {
+    if (fontWeight == null) return pw.FontWeight.normal;
+    
+    switch (fontWeight) {
+      case FontWeight.w100:
+      case FontWeight.w200:
+      case FontWeight.w300:
+        return pw.FontWeight.normal; // PDF doesn't have light, using normal
+      case FontWeight.w400:
+        return pw.FontWeight.normal;
+      case FontWeight.w500:
+        return pw.FontWeight.normal; // PDF doesn't have medium, using normal
+      case FontWeight.w600:
+        return pw.FontWeight.normal; // PDF doesn't have semiBold, using normal
+      case FontWeight.w700:
+      case FontWeight.w800:
+      case FontWeight.w900:
+        return pw.FontWeight.bold;
+      default:
+        return pw.FontWeight.normal; // Default fallback
+    }
+  }
+
+  /// Convert Flutter Color to PDF Color
+  static PdfColor _convertColor(Color? color) {
+    if (color == null) return PdfColors.black;
+    return PdfColor.fromInt(color.value);
+  }
+
   /// Generate PDF from invoice data
   static Future<Uint8List> generateInvoicePDF(InvoiceData data) async {
     debugPrint('PdfGeneratorWidget: Starting PDF generation');
     
     final pdf = pw.Document();
+    
+    // Load logo image
+    final logoImage = await _loadLogoImage();
 
     pdf.addPage(
       pw.Page(
@@ -24,7 +83,7 @@ class PdfGeneratorWidget {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               // Header Section
-              _buildHeader(data),
+              _buildHeader(data, logoImage),
               pw.SizedBox(height: 20),
               
               // Patient Details
@@ -56,7 +115,7 @@ class PdfGeneratorWidget {
   }
 
   /// Build header section
-  static pw.Widget _buildHeader(InvoiceData data) {
+  static pw.Widget _buildHeader(InvoiceData data, pw.ImageProvider logoImage) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -68,10 +127,8 @@ class PdfGeneratorWidget {
               children: [
                 pw.Text(
                   data.companyName,
-                  style: pw.TextStyle(
-                    fontSize: 24, 
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.green,
+                  style: _convertToPdfTextStyle(
+                    TextStyleClass.heading1(ColorClass.primaryColor),
                   ),
                 ),
                 pw.SizedBox(height: 10),
@@ -79,13 +136,18 @@ class PdfGeneratorWidget {
                   width: 60,
                   height: 60,
                   decoration: pw.BoxDecoration(
-                    border: pw.Border.all(color: PdfColors.green, width: 2),
+                    border: pw.Border.all(
+                      color: _convertColor(ColorClass.primaryColor), 
+                      width: 2,
+                    ),
                     borderRadius: pw.BorderRadius.circular(30),
                   ),
                   child: pw.Center(
-                    child: pw.Text(
-                      StringClass.logoText,
-                      style: pw.TextStyle(color: PdfColors.green),
+                    child: pw.Image(
+                      logoImage,
+                      width: 50,
+                      height: 50,
+                      fit: pw.BoxFit.contain,
                     ),
                   ),
                 ),
@@ -96,32 +158,34 @@ class PdfGeneratorWidget {
               children: [
                 pw.Text(
                   data.branchName,
-                  style: pw.TextStyle(
-                    fontSize: 18, 
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.green,
+                  style: _convertToPdfTextStyle(
+                    TextStyleClass.heading3(ColorClass.primaryColor),
                   ),
                 ),
                 pw.SizedBox(height: 5),
                 pw.Text(
                   data.address, 
-                  style: const pw.TextStyle(fontSize: 12),
+                  style: _convertToPdfTextStyle(
+                    TextStyleClass.bodySmall(ColorClass.primaryText),
+                  ),
                 ),
                 pw.Text(
                   'e-mail: ${data.email}', 
-                  style: const pw.TextStyle(fontSize: 12),
+                  style: _convertToPdfTextStyle(
+                    TextStyleClass.bodySmall(ColorClass.primaryText),
+                  ),
                 ),
                 pw.Text(
                   'Mob: ${data.phone}', 
-                  style: const pw.TextStyle(fontSize: 12),
+                  style: _convertToPdfTextStyle(
+                    TextStyleClass.bodySmall(ColorClass.primaryText),
+                  ),
                 ),
                 pw.SizedBox(height: 10),
                 pw.Text(
                   'GST No: ${data.gstNumber}',
-                  style: pw.TextStyle(
-                    fontSize: 12, 
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.green,
+                  style: _convertToPdfTextStyle(
+                    TextStyleClass.bodySmall(ColorClass.primaryColor),
                   ),
                 ),
               ],
@@ -137,7 +201,7 @@ class PdfGeneratorWidget {
     return pw.Container(
       padding: const pw.EdgeInsets.all(15),
       decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: PdfColors.grey300),
+        border: pw.Border.all(color: _convertColor(ColorClass.grey)),
         borderRadius: pw.BorderRadius.circular(8),
       ),
       child: pw.Column(
@@ -145,10 +209,8 @@ class PdfGeneratorWidget {
         children: [
           pw.Text(
             StringClass.patientDetails,
-            style: pw.TextStyle(
-              fontSize: 16,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColors.green,
+            style: _convertToPdfTextStyle(
+              TextStyleClass.heading4(ColorClass.primaryColor),
             ),
           ),
           pw.SizedBox(height: 10),
@@ -192,10 +254,19 @@ class PdfGeneratorWidget {
             width: 120,
             child: pw.Text(
               label,
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              style: _convertToPdfTextStyle(
+                TextStyleClass.bodySmall(ColorClass.primaryText),
+              ),
             ),
           ),
-          pw.Expanded(child: pw.Text(value)),
+          pw.Expanded(
+            child: pw.Text(
+              value,
+              style: _convertToPdfTextStyle(
+                TextStyleClass.bodySmall(ColorClass.black),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -204,11 +275,11 @@ class PdfGeneratorWidget {
   /// Build treatment table
   static pw.Widget _buildTreatmentTable(InvoiceData data) {
     return pw.Table(
-      border: pw.TableBorder.all(color: PdfColors.grey300),
+      border: pw.TableBorder.all(color: _convertColor(ColorClass.grey)),
       children: [
         // Header
         pw.TableRow(
-          decoration: const pw.BoxDecoration(color: PdfColors.green100),
+          decoration: pw.BoxDecoration(color: _convertColor(ColorClass.primaryColor.withValues(alpha: 0.1))),
           children: [
             _buildTableCell(StringClass.treatment, isHeader: true),
             _buildTableCell(StringClass.price, isHeader: true),
@@ -237,9 +308,10 @@ class PdfGeneratorWidget {
       padding: const pw.EdgeInsets.all(8),
       child: pw.Text(
         text,
-        style: pw.TextStyle(
-          fontWeight: isHeader ? pw.FontWeight.bold : pw.FontWeight.normal,
-          color: isHeader ? PdfColors.green : PdfColors.black,
+        style: _convertToPdfTextStyle(
+          isHeader 
+            ? TextStyleClass.bodyMedium(ColorClass.primaryColor)
+            : TextStyleClass.bodySmall(ColorClass.black),
         ),
         textAlign: pw.TextAlign.center,
       ),
@@ -257,7 +329,7 @@ class PdfGeneratorWidget {
             _buildAmountRow(StringClass.totalAmount, data.totalAmount.toStringAsFixed(0)),
             _buildAmountRow(StringClass.discount, data.discount.toStringAsFixed(0)),
             _buildAmountRow(StringClass.advance, data.advance.toStringAsFixed(0)),
-            pw.Divider(color: PdfColors.grey400),
+            pw.Divider(color: _convertColor(ColorClass.grey)),
             _buildAmountRow(
               StringClass.balance,
               data.balance.toStringAsFixed(0),
@@ -278,16 +350,18 @@ class PdfGeneratorWidget {
         children: [
           pw.Text(
             label,
-            style: pw.TextStyle(
-              fontWeight: isTotal ? pw.FontWeight.bold : pw.FontWeight.normal,
-              fontSize: isTotal ? 16 : 14,
+            style: _convertToPdfTextStyle(
+              isTotal 
+                ? TextStyleClass.bodyLarge(ColorClass.primaryText)
+                : TextStyleClass.bodyMedium(ColorClass.primaryText),
             ),
           ),
           pw.Text(
             amount,
-            style: pw.TextStyle(
-              fontWeight: isTotal ? pw.FontWeight.bold : pw.FontWeight.normal,
-              fontSize: isTotal ? 16 : 14,
+            style: _convertToPdfTextStyle(
+              isTotal 
+                ? TextStyleClass.bodyLarge(ColorClass.primaryColor)
+                : TextStyleClass.bodyMedium(ColorClass.black),
             ),
           ),
         ],
@@ -301,17 +375,17 @@ class PdfGeneratorWidget {
       children: [
         pw.Text(
           data.thankYouMessage,
-          style: pw.TextStyle(
-            fontSize: 18,
-            fontWeight: pw.FontWeight.bold,
-            color: PdfColors.green,
+          style: _convertToPdfTextStyle(
+            TextStyleClass.heading3(ColorClass.primaryColor),
           ),
           textAlign: pw.TextAlign.center,
         ),
         pw.SizedBox(height: 10),
         pw.Text(
           StringClass.thankYouMessage,
-          style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey600),
+          style: _convertToPdfTextStyle(
+            TextStyleClass.bodySmall(ColorClass.primaryText),
+          ),
           textAlign: pw.TextAlign.center,
         ),
         pw.SizedBox(height: 15),
@@ -326,12 +400,14 @@ class PdfGeneratorWidget {
                 pw.Container(
                   width: 150,
                   height: 1,
-                  color: PdfColors.black,
+                  color: _convertColor(ColorClass.black),
                 ),
                 pw.SizedBox(height: 5),
                 pw.Text(
                   StringClass.signature,
-                  style: const pw.TextStyle(fontSize: 12),
+                  style: _convertToPdfTextStyle(
+                    TextStyleClass.bodySmall(ColorClass.primaryText),
+                  ),
                 ),
               ],
             ),
@@ -347,12 +423,14 @@ class PdfGeneratorWidget {
       width: double.infinity,
       padding: const pw.EdgeInsets.all(15),
       decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: PdfColors.grey300),
+        border: pw.Border.all(color: _convertColor(ColorClass.grey)),
         borderRadius: pw.BorderRadius.circular(8),
       ),
       child: pw.Text(
         data.footerNote,
-        style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
+        style: _convertToPdfTextStyle(
+          TextStyleClass.caption(ColorClass.primaryText),
+        ),
         textAlign: pw.TextAlign.center,
       ),
     );

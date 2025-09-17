@@ -13,9 +13,6 @@ import 'package:ayurseva/constants/color_class.dart';
 import 'package:ayurseva/constants/textstyle_class.dart';
 import 'package:provider/provider.dart';
 
-
-
-
 // Main Registration Screen
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -64,6 +61,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             selectedTreatments: registrationProvider.selectedTreatments,
             onSave: (treatments) {
               registrationProvider.updateSelectedTreatments(treatments);
+              registrationProvider.clearError('treatments');
             },
           ),
     );
@@ -125,7 +123,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             hintText: 'Enter your full name',
                             labelText: 'Name',
                             validator: registrationProvider.validateName,
+                            onChanged:
+                                (value) =>
+                                    registrationProvider.clearError('name'),
                           ),
+                          if (registrationProvider.nameError != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              registrationProvider.nameError!,
+                              style: TextStyleClass.bodySmall(Colors.red),
+                            ),
+                          ],
                           const SizedBox(height: 20),
 
                           // WhatsApp Number
@@ -135,7 +143,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             labelText: 'WhatsApp Number',
                             keyboardType: TextInputType.phone,
                             validator: registrationProvider.validateWhatsApp,
+                            onChanged:
+                                (value) =>
+                                    registrationProvider.clearError('whatsapp'),
                           ),
+                          if (registrationProvider.whatsappError != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              registrationProvider.whatsappError!,
+                              style: TextStyleClass.bodySmall(Colors.red),
+                            ),
+                          ],
                           const SizedBox(height: 20),
 
                           // Address
@@ -145,7 +163,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             labelText: 'Address',
                             maxLines: 2,
                             validator: registrationProvider.validateAddress,
+                            onChanged:
+                                (value) =>
+                                    registrationProvider.clearError('address'),
                           ),
+                          if (registrationProvider.addressError != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              registrationProvider.addressError!,
+                              style: TextStyleClass.bodySmall(Colors.red),
+                            ),
+                          ],
                           const SizedBox(height: 20),
 
                           // Location
@@ -154,9 +182,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             labelText: 'Location',
                             value: registrationProvider.selectedLocation,
                             items: registrationProvider.locations,
-                            onChanged: registrationProvider.updateLocation,
+                            onChanged: (value) {
+                              registrationProvider.updateLocation(value);
+                              registrationProvider.clearError('location');
+                            },
                             validator: registrationProvider.validateLocation,
                           ),
+                          if (registrationProvider.locationError != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              registrationProvider.locationError!,
+                              style: TextStyleClass.bodySmall(Colors.red),
+                            ),
+                          ],
                           const SizedBox(height: 20),
 
                           Consumer<BranchProvider>(
@@ -166,20 +204,59 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                 labelText: 'Branch',
                                 value: registrationProvider.selectedBranch,
                                 items: branchProvider.getAllBranchNames(),
-                                onChanged: registrationProvider.updateBranch,
+                                onChanged: (value) {
+                                  registrationProvider.updateBranch(value);
+                                  registrationProvider.clearError('branch');
+                                },
                                 validator: registrationProvider.validateBranch,
                               );
                             },
                           ),
+                          if (registrationProvider.branchError != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              registrationProvider.branchError!,
+                              style: TextStyleClass.bodySmall(Colors.red),
+                            ),
+                          ],
                           const SizedBox(height: 20),
 
                           // Treatments Section
-                          Text(
-                            'Treatments',
-                            style: TextStyleClass.bodyLarge(
-                              ColorClass.primaryText,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                'Treatments',
+                                style: TextStyleClass.bodyLarge(
+                                  ColorClass.primaryText,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              if (registrationProvider
+                                  .selectedTreatments
+                                  .isEmpty)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    'Required',
+                                    style: TextStyleClass.bodySmall(Colors.red),
+                                  ),
+                                ),
+                            ],
                           ),
+                          if (registrationProvider.treatmentsError != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              registrationProvider.treatmentsError!,
+                              style: TextStyleClass.bodySmall(Colors.red),
+                            ),
+                          ],
                           const SizedBox(height: 10),
 
                           // Selected Treatments List
@@ -346,7 +423,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             hintText: 'Enter total amount',
                             labelText: 'Total Amount',
                             keyboardType: TextInputType.number,
+                            validator: registrationProvider.validateTotalAmount,
+                            onChanged: (value) {
+                              registrationProvider.calculateBalanceAmount();
+                              registrationProvider.clearError('totalAmount');
+                            },
                           ),
+                          if (registrationProvider.totalAmountError !=
+                              null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              registrationProvider.totalAmountError!,
+                              style: TextStyleClass.bodySmall(Colors.red),
+                            ),
+                          ],
                           const SizedBox(height: 20),
 
                           // Discount Amount
@@ -356,7 +446,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             hintText: 'Enter discount amount',
                             labelText: 'Discount Amount',
                             keyboardType: TextInputType.number,
+                            validator:
+                                registrationProvider.validateDiscountAmount,
+                            onChanged: (value) {
+                              registrationProvider.calculateBalanceAmount();
+                              registrationProvider.clearError('discountAmount');
+                            },
                           ),
+                          if (registrationProvider.discountAmountError !=
+                              null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              registrationProvider.discountAmountError!,
+                              style: TextStyleClass.bodySmall(Colors.red),
+                            ),
+                          ],
                           const SizedBox(height: 20),
 
                           // Payment Option
@@ -385,22 +489,63 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             hintText: 'Enter advance amount',
                             labelText: 'Advance Amount',
                             keyboardType: TextInputType.number,
+                            validator:
+                                registrationProvider.validateAdvanceAmount,
+                            onChanged: (value) {
+                              registrationProvider.calculateBalanceAmount();
+                              registrationProvider.clearError('advanceAmount');
+                            },
                           ),
+                          if (registrationProvider.advanceAmountError !=
+                              null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              registrationProvider.advanceAmountError!,
+                              style: TextStyleClass.bodySmall(Colors.red),
+                            ),
+                          ],
                           const SizedBox(height: 20),
 
-                          // Balance Amount
+                          // Balance Amount (Auto-calculated)
                           CustomTextFormField(
                             controller:
                                 registrationProvider.balanceAmountController,
-                            hintText: 'Enter balance amount',
+                            hintText: 'Auto-calculated',
                             labelText: 'Balance Amount',
                             keyboardType: TextInputType.number,
+                            validator:
+                                registrationProvider.validateBalanceAmount,
+                            enabled: false,
+                            suffixIcon: Icon(
+                              Icons.calculate,
+                              color: ColorClass.primaryColor,
+                            ),
                           ),
+                          if (registrationProvider.balanceAmountError !=
+                              null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              registrationProvider.balanceAmountError!,
+                              style: TextStyleClass.bodySmall(Colors.red),
+                            ),
+                          ],
+                          if (registrationProvider.amountConsistencyError !=
+                              null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              registrationProvider.amountConsistencyError!,
+                              style: TextStyleClass.bodySmall(Colors.red),
+                            ),
+                          ],
                           const SizedBox(height: 20),
 
                           // Treatment Date
                           GestureDetector(
-                            onTap: () => _showDatePicker(context, registrationProvider),
+                            onTap:
+                                () => _showDatePicker(
+                                  context,
+                                  registrationProvider,
+                                ),
                             child: AbsorbPointer(
                               child: CustomTextFormField(
                                 controller:
@@ -412,28 +557,63 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                   Icons.calendar_today,
                                   color: ColorClass.primaryColor,
                                 ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please select treatment date';
-                                  }
-                                  return null;
-                                },
+                                validator:
+                                    registrationProvider.validateTreatmentDate,
                               ),
                             ),
                           ),
-
+                          if (registrationProvider.treatmentDateError !=
+                              null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              registrationProvider.treatmentDateError!,
+                              style: TextStyleClass.bodySmall(Colors.red),
+                            ),
+                          ],
                           const SizedBox(height: 20),
 
                           // Treatment Time
-                          Text(
-                            'Treatment Time',
-                            style: TextStyleClass.bodyLarge(
-                              ColorClass.primaryText,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                'Treatment Time',
+                                style: TextStyleClass.bodyLarge(
+                                  ColorClass.primaryText,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              if (registrationProvider.selectedDateTime == null)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    'Required',
+                                    style: TextStyleClass.bodySmall(Colors.red),
+                                  ),
+                                ),
+                            ],
                           ),
+                          if (registrationProvider.treatmentTimeError !=
+                              null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              registrationProvider.treatmentTimeError!,
+                              style: TextStyleClass.bodySmall(Colors.red),
+                            ),
+                          ],
                           const SizedBox(height: 10),
                           GestureDetector(
-                            onTap: () => _showTimePicker(context, registrationProvider),
+                            onTap:
+                                () => _showTimePicker(
+                                  context,
+                                  registrationProvider,
+                                ),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -452,18 +632,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(
-                                      registrationProvider.selectedDateTime != null
+                                      registrationProvider.selectedDateTime !=
+                                              null
                                           ? AppUtils.formatTreatmentTime(
-                                              registrationProvider.selectedDateTime!,
-                                            )
+                                            registrationProvider
+                                                .selectedDateTime!,
+                                          )
                                           : 'Select Time',
                                       style: TextStyleClass.poppinsSemiBold(
                                         16,
-                                        registrationProvider.selectedDateTime != null
+                                        registrationProvider.selectedDateTime !=
+                                                null
                                             ? ColorClass.primaryText
                                             : ColorClass.grey.withValues(
-                                                alpha: 0.5,
-                                              ),
+                                              alpha: 0.5,
+                                            ),
                                       ),
                                     ),
                                   ),
@@ -486,10 +669,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: CustomButton(
                     text: 'Save',
-                    onPressed: () => registrationProvider.registerPatient(
-                      context: context,
-                      treatmentProvider: treatmentProvider,
-                    ),
+                    onPressed:
+                        () => registrationProvider.registerPatient(
+                          context: context,
+                          treatmentProvider: treatmentProvider,
+                        ),
                     isLoading: registrationProvider.isLoading,
                   ),
                 ),
@@ -523,7 +707,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     RegistrationProvider registrationProvider,
   ) async {
     debugPrint('RegistrationScreen: Showing date picker');
-    
+
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: registrationProvider.selectedTreatmentDate ?? DateTime.now(),
@@ -548,8 +732,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
 
     if (pickedDate != null) {
-      debugPrint('RegistrationScreen: Date selected - ${AppUtils.formatDate(pickedDate)}');
+      debugPrint(
+        'RegistrationScreen: Date selected - ${AppUtils.formatDate(pickedDate)}',
+      );
       registrationProvider.updateTreatmentDate(pickedDate);
+      registrationProvider.clearError('treatmentDate');
     } else {
       debugPrint('RegistrationScreen: Date picker cancelled');
     }
@@ -561,73 +748,75 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     RegistrationProvider registrationProvider,
   ) {
     debugPrint('RegistrationScreen: Showing time picker');
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(20),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Container(
-        height: 280,
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      builder:
+          (context) => Container(
+            height: 280,
+            padding: const EdgeInsets.all(20),
+            child: Column(
               children: [
-                TextButton(
-                  onPressed: () {
-                    debugPrint('RegistrationScreen: Time picker cancelled');
-                    Navigator.pop(context);
-                  },
-                  child: Text(
-                    'Cancel',
-                    style: TextStyleClass.poppinsSemiBold(
-                      16,
-                      ColorClass.grey.withValues(alpha: 0.5),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        debugPrint('RegistrationScreen: Time picker cancelled');
+                        Navigator.pop(context);
+                      },
+                      child: Text(
+                        'Cancel',
+                        style: TextStyleClass.poppinsSemiBold(
+                          16,
+                          ColorClass.grey.withValues(alpha: 0.5),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                Text(
-                  'Select Time',
-                  style: TextStyleClass.poppinsSemiBold(
-                    18,
-                    ColorClass.primaryText,
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    debugPrint('RegistrationScreen: Time picker done');
-                    Navigator.pop(context);
-                  },
-                  child: Text(
-                    'Done',
-                    style: TextStyleClass.poppinsSemiBold(
-                      16,
-                      ColorClass.primaryColor,
+                    Text(
+                      'Select Time',
+                      style: TextStyleClass.poppinsSemiBold(
+                        18,
+                        ColorClass.primaryText,
+                      ),
                     ),
+                    TextButton(
+                      onPressed: () {
+                        debugPrint('RegistrationScreen: Time picker done');
+                        Navigator.pop(context);
+                      },
+                      child: Text(
+                        'Done',
+                        style: TextStyleClass.poppinsSemiBold(
+                          16,
+                          ColorClass.primaryColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Expanded(
+                  child: CupertinoDatePicker(
+                    mode: CupertinoDatePickerMode.time,
+                    use24hFormat: false, // Change to true for 24-hour format
+                    onDateTimeChanged: (DateTime dateTime) {
+                      debugPrint(
+                        'RegistrationScreen: Time selected - ${AppUtils.formatTreatmentTime(dateTime)}',
+                      );
+                      registrationProvider.updateSelectedDateTime(dateTime);
+                      registrationProvider.clearError('treatmentTime');
+                    },
+                    initialDateTime: DateTime.now(),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: CupertinoDatePicker(
-                mode: CupertinoDatePickerMode.time,
-                use24hFormat: false, // Change to true for 24-hour format
-                onDateTimeChanged: (DateTime dateTime) {
-                  debugPrint('RegistrationScreen: Time selected - ${AppUtils.formatTreatmentTime(dateTime)}');
-                  registrationProvider.updateSelectedDateTime(dateTime);
-                },
-                initialDateTime: DateTime.now(),
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 }
