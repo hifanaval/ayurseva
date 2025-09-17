@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:ayurseva/constants/api_urls.dart';
 import 'package:ayurseva/constants/global_variables.dart';
 import 'package:ayurseva/constants/string_class.dart';
-import 'package:ayurseva/home_screen/home_screen.dart';
+import 'package:ayurseva/home_screen/treatments_list_screen.dart';
 import 'package:ayurseva/login_screen/login_screen.dart';
 import 'package:ayurseva/login_screen/model/login_response_model.dart';
 import 'package:ayurseva/utils/app_utils.dart';
@@ -13,8 +13,8 @@ import 'package:flutter/material.dart';
 
 class AuthProvider extends ChangeNotifier {
   // Controllers
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController emailController = TextEditingController(text:'test_user');
+  final TextEditingController passwordController = TextEditingController(text:'12345678');
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   LoginResponseModel? loginResponseModel;

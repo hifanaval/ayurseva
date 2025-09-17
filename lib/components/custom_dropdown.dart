@@ -1,24 +1,86 @@
-// Custom Dropdown Widget
 import 'package:ayurseva/constants/color_class.dart';
 import 'package:ayurseva/constants/textstyle_class.dart';
 import 'package:flutter/material.dart';
 
 class CustomDropdown extends StatelessWidget {
-  final String value;
+  // Common properties
+  final String? value;
   final List<String> items;
   final Function(String?) onChanged;
-  final String label;
+  final String? Function(String?)? validator;
+
+  // Style type properties
+  final CustomDropdownStyle style;
+  
+  // For inline style (original)
+  final String? label;
+  
+  // For field style (new)
+  final String? hintText;
+  final String? labelText;
 
   const CustomDropdown({
     Key? key,
-    required this.value,
+    this.value,
     required this.items,
     required this.onChanged,
-    required this.label,
+    this.validator,
+    this.style = CustomDropdownStyle.inline,
+    this.label,
+    this.hintText,
+    this.labelText,
   }) : super(key: key);
+
+  // Factory constructor for inline style (original usage)
+  factory CustomDropdown.inline({
+    required String value,
+    required List<String> items,
+    required Function(String?) onChanged,
+    required String label,
+    String? Function(String?)? validator,
+  }) {
+    return CustomDropdown(
+      value: value,
+      items: items,
+      onChanged: onChanged,
+      validator: validator,
+      style: CustomDropdownStyle.inline,
+      label: label,
+    );
+  }
+
+  // Factory constructor for field style (new usage)
+  factory CustomDropdown.field({
+    String? value,
+    required List<String> items,
+    required Function(String?) onChanged,
+    String? hintText,
+    String? labelText,
+    String? Function(String?)? validator,
+  }) {
+    return CustomDropdown(
+      value: value,
+      items: items,
+      onChanged: onChanged,
+      validator: validator,
+      style: CustomDropdownStyle.field,
+      hintText: hintText,
+      labelText: labelText,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    switch (style) {
+      case CustomDropdownStyle.inline:
+        return _buildInlineDropdown();
+      case CustomDropdownStyle.field:
+        return _buildFieldDropdown();
+    }
+  }
+
+  // Original inline dropdown design
+  Widget _buildInlineDropdown() {
     return Row(
       children: [
         Text(
@@ -36,6 +98,7 @@ class CustomDropdown extends StatelessWidget {
             ),
           ),
           child: DropdownButtonHideUnderline(
+            
             child: DropdownButton<String>(
               value: value,
               icon: Icon(
@@ -58,4 +121,72 @@ class CustomDropdown extends StatelessWidget {
       ],
     );
   }
+
+  // New field dropdown design (like TextFormField)
+  Widget _buildFieldDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (labelText != null) ...[
+          Text(
+            labelText!,
+            style: TextStyleClass.bodyLarge(ColorClass.primaryText),
+          ),
+          const SizedBox(height: 6),
+        ],
+        DropdownButtonFormField<String>(
+          value: value,
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: TextStyleClass.lightMedium(ColorClass.black.withValues(alpha: 0.4)),
+            filled: true,
+            fillColor: ColorClass.grey,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: ColorClass.black.withValues(alpha: 0.1)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: ColorClass.black.withValues(alpha: 0.1)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: ColorClass.primaryColor, width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+          items: items.map((String item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(
+                item,
+                style: TextStyleClass.buttonLarge(ColorClass.primaryText),
+              ),
+            );
+          }).toList(),
+          onChanged: onChanged,
+          validator: validator,
+          icon: Icon(
+            Icons.keyboard_arrow_down,
+            color: ColorClass.primaryColor,
+          ),
+          style: TextStyleClass.buttonLarge(ColorClass.primaryText),
+        ),
+      ],
+    );
+  }
+}
+
+// Enum to define dropdown styles
+enum CustomDropdownStyle {
+  inline,  // Original style with label on the side
+  field,   // New style like TextFormField
 }

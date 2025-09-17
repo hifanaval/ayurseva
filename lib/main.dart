@@ -1,10 +1,18 @@
 import 'package:ayurseva/login_screen/login_screen.dart';
 import 'package:ayurseva/login_screen/provider/auth_provider.dart';
+import 'package:ayurseva/utils/shared_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'splash_screen/splash_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize SharedPreferences
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  SharedUtils.sharedPreferences = prefs;
+  
   runApp(const MyApp());
 }
 

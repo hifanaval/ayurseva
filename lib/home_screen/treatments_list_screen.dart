@@ -4,25 +4,10 @@ import 'package:ayurseva/constants/color_class.dart';
 import 'package:ayurseva/constants/textstyle_class.dart';
 import 'package:ayurseva/home_screen/widgets/treatment_card.dart';
 import 'package:ayurseva/login_screen/provider/auth_provider.dart';
+import 'package:ayurseva/models/treatment_booking.dart';
+import 'package:ayurseva/utils/app_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-// Models
-class TreatmentBooking {
-  final int id;
-  final String customerName;
-  final String treatmentName;
-  final String date;
-  final String bookedBy;
-
-  TreatmentBooking({
-    required this.id,
-    required this.customerName,
-    required this.treatmentName,
-    required this.date,
-    required this.bookedBy,
-  });
-}
 
 // Main Screen
 class TreatmentsListScreen extends StatefulWidget {
@@ -123,28 +108,33 @@ class _TreatmentsListScreenState extends State<TreatmentsListScreen> {
                 children: [
                   // Logout button
                   GestureDetector(
-                    onTap: () async {
+                    onTap: () {
                       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                      await authProvider.logout(context);
+                      AppUtils.showLogoutConfirmation(context, () async {
+                        await authProvider.logout(context);
+                      });
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: ColorClass.primaryColor,
                         borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                                                  color: ColorClass.primaryColor,
+
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            Icons.logout,
-                            color: ColorClass.white,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 4),
+                          // Icon(
+                          //   Icons.logout,
+                          //   color: ColorClass.primaryColor,
+                          //   size: 18,
+                          // ),
+                          // const SizedBox(width: 4),
                           Text(
                             'Logout',
-                            style: TextStyleClass.bodySmall(ColorClass.white),
+                            style: TextStyleClass.bodySmall(ColorClass.primaryColor),
                           ),
                         ],
                       ),
@@ -197,6 +187,7 @@ class _TreatmentsListScreenState extends State<TreatmentsListScreen> {
                   value: _selectedSortBy,
                   items: _sortOptions,
                   onChanged: _handleSortChange,
+                  style: CustomDropdownStyle.inline,
                   label: 'Sort by',
                 ),
               ),

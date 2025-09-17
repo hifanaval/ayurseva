@@ -1,6 +1,6 @@
 import 'package:ayurseva/constants/icon_class.dart';
 import 'package:ayurseva/constants/image_class.dart';
-import 'package:ayurseva/home_screen/home_screen.dart';
+import 'package:ayurseva/home_screen/treatments_list_screen.dart';
 import 'package:ayurseva/login_screen/login_screen.dart';
 import 'package:ayurseva/login_screen/provider/auth_provider.dart';
 import 'package:ayurseva/utils/app_utils.dart';

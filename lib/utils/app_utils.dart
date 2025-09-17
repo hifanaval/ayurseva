@@ -97,5 +97,57 @@ class AppUtils {
             debugPrint('Toast ${toastItem.id} dismissed'),
       ),
     );
+  }
 
-}}
+  /// Show logout confirmation dialog
+  static void showLogoutConfirmation(BuildContext context, VoidCallback onLogoutConfirm) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'Logout',
+            style: TextStyleClass.poppinsSemiBold(18, ColorClass.primaryText),
+          ),
+          content: Text(
+            'Are you sure you want to logout?',
+            style: TextStyleClass.poppinsRegular(14, ColorClass.primaryText),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cancel
+              },
+              child: Text(
+                'Cancel',
+                style: TextStyleClass.poppinsMedium(14, ColorClass.primaryText),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+                onLogoutConfirm(); // Execute logout function
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorClass.primaryColor,
+                foregroundColor: ColorClass.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
+              child: Text(
+                'Logout',
+                style: TextStyleClass.poppinsMedium(14, ColorClass.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}

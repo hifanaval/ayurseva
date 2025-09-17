@@ -1,7 +1,7 @@
 // Treatment Card Widget
 import 'package:ayurseva/constants/color_class.dart';
 import 'package:ayurseva/constants/textstyle_class.dart';
-import 'package:ayurseva/home_screen/home_screen.dart';
+import 'package:ayurseva/models/treatment_booking.dart';
 import 'package:flutter/material.dart';
 
 class TreatmentCard extends StatelessWidget {
