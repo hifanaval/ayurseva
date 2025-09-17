@@ -15,4 +15,8 @@ class ApiUrls {
   static String getTreatmentData() {
     return '${baseUrl}TreatmentList';
   }
+
+  static String registerPatient() {
+    return '${baseUrl}PatientUpdate';
+  }
 }

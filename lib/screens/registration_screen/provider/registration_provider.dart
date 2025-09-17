@@ -2,9 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:ayurseva/screens/registration_screen/registration_screen.dart';
 import 'package:ayurseva/screens/registration_screen/provider/branch_provider.dart';
 import 'package:ayurseva/screens/registration_screen/provider/treatment_type_provider.dart';
+import 'package:ayurseva/constants/api_urls.dart';
+import 'package:ayurseva/constants/string_class.dart';
+import 'package:ayurseva/utils/shared_utils.dart';
+import 'package:ayurseva/utils/app_utils.dart';
+import 'package:ayurseva/utils/pdf_generator.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:intl/intl.dart';
 
 class RegistrationProvider extends ChangeNotifier {
+  // Loading state
+  bool isLoading = false;
+
   // Form key
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
@@ -22,8 +32,8 @@ class RegistrationProvider extends ChangeNotifier {
   String? selectedLocation;
   String? selectedBranch;
   String selectedPaymentOption = 'Cash';
-  String selectedHour = 'Hour';
-  String selectedMinute = 'Minutes';
+  String selectedHour = '12';
+  String selectedMinute = '00';
   TimeOfDay? selectedTime;
   DateTime? selectedDateTime;
   int selectedHourIndex = 0;
@@ -42,8 +52,14 @@ class RegistrationProvider extends ChangeNotifier {
   // Available treatments list (will be populated from TreatmentTypeProvider)
   List<String> availableTreatments = [];
 
-  // Data from providers
-  List<String> locations = [];
+  // Static locations
+  final List<String> locations = [
+    'Kochi,kerala',
+    'Kozhikode', 
+    'Kumarakom'
+  ];
+  
+  // Branches from API
   List<String> branches = [];
   final List<String> hours = List.generate(
     24,
@@ -61,6 +77,14 @@ class RegistrationProvider extends ChangeNotifier {
   
   void updateSelectedDateTime(DateTime dateTime) {
     selectedDateTime = dateTime;
+    
+    // Update the individual time components for PDF generation
+    final timeOfDay = TimeOfDay.fromDateTime(dateTime);
+    selectedHour = timeOfDay.hourOfPeriod.toString().padLeft(2, '0');
+    selectedMinute = timeOfDay.minute.toString().padLeft(2, '0');
+    selectedPeriod = timeOfDay.period == DayPeriod.am ? 'AM' : 'PM';
+    
+    print('RegistrationProvider: Updated time - $selectedHour:$selectedMinute $selectedPeriod');
     notifyListeners();
   }
   
@@ -147,8 +171,6 @@ class RegistrationProvider extends ChangeNotifier {
   void updateLocation(String? value) {
     print('RegistrationProvider: Updating location to: $value');
     selectedLocation = value;
-    // Reset branch selection when location changes
-    selectedBranch = null;
     notifyListeners();
   }
 
@@ -164,12 +186,12 @@ class RegistrationProvider extends ChangeNotifier {
   }
 
   void updateHour(String? value) {
-    selectedHour = value ?? 'Hour';
+    selectedHour = value ?? '12';
     notifyListeners();
   }
 
   void updateMinute(String? value) {
-    selectedMinute = value ?? 'Minutes';
+    selectedMinute = value ?? '00';
     notifyListeners();
   }
 
@@ -180,23 +202,19 @@ class RegistrationProvider extends ChangeNotifier {
       await branchProvider.fetchBranchData(context);
       
       if (branchProvider.branches != null) {
-        // Extract unique locations from branches
-        Set<String> uniqueLocations = {};
+        // Extract branch names from API data
         List<String> branchNames = [];
         
         for (var branch in branchProvider.branches!) {
-          if (branch.location != null) {
-            uniqueLocations.add(branch.location!);
-          }
           if (branch.name != null) {
             branchNames.add(branch.name!);
           }
         }
         
-        locations = uniqueLocations.toList();
         branches = branchNames;
         
-        print('RegistrationProvider: Branch data processed - ${locations.length} locations, ${branches.length} branches');
+        print('RegistrationProvider: Branch data processed - ${branches.length} branches from API');
+        print('RegistrationProvider: Using static locations: ${locations.join(", ")}');
         notifyListeners();
       }
     } catch (e) {
@@ -210,12 +228,22 @@ class RegistrationProvider extends ChangeNotifier {
       await treatmentProvider.fetchTreatmentData(context);
       
       if (treatmentProvider.treatments.isNotEmpty) {
-        availableTreatments = treatmentProvider.treatments
+        // Get unique treatment names to avoid duplicate dropdown values
+        final treatmentNames = treatmentProvider.treatments
             .where((treatment) => treatment.isActive == true && treatment.name != null)
             .map((treatment) => treatment.name!)
+            .toSet() // Use Set to remove duplicates
             .toList();
         
-        print('RegistrationProvider: Treatment data processed - ${availableTreatments.length} active treatments');
+        availableTreatments = treatmentNames;
+        
+        // Clear selected treatment if it's no longer available
+        if (selectedTreatment != null && !availableTreatments.contains(selectedTreatment)) {
+          selectedTreatment = null;
+          print('RegistrationProvider: Cleared invalid selected treatment');
+        }
+        
+        print('RegistrationProvider: Treatment data processed - ${availableTreatments.length} unique active treatments');
         notifyListeners();
       }
     } catch (e) {
@@ -223,21 +251,21 @@ class RegistrationProvider extends ChangeNotifier {
     }
   }
 
-  // Method to filter branches based on selected location
-  List<String> getFilteredBranches(BranchProvider branchProvider) {
-    if (selectedLocation == null || branchProvider.branches == null) {
+  // Method to get all branches from API (no filtering)
+  List<String> getAllBranches(BranchProvider branchProvider) {
+    if (branchProvider.branches == null) {
       return branches;
     }
     
-    List<String> filteredBranches = [];
+    List<String> allBranches = [];
     for (var branch in branchProvider.branches!) {
-      if (branch.location == selectedLocation && branch.name != null) {
-        filteredBranches.add(branch.name!);
+      if (branch.name != null) {
+        allBranches.add(branch.name!);
       }
     }
     
-    print('RegistrationProvider: Filtered branches for location "$selectedLocation": ${filteredBranches.length} branches');
-    return filteredBranches;
+    print('RegistrationProvider: Showing all branches from API: ${allBranches.length} branches');
+    return allBranches;
   }
 
   // Treatment methods
@@ -265,7 +293,15 @@ class RegistrationProvider extends ChangeNotifier {
 
   void updateSelectedTreatment(String? value) {
     print('RegistrationProvider: Updating selected treatment to: $value');
-    selectedTreatment = value;
+    // Ensure the selected treatment is valid and exists in available treatments
+    if (value != null && availableTreatments.contains(value)) {
+      selectedTreatment = value;
+    } else if (value == null) {
+      selectedTreatment = null;
+    } else {
+      print('RegistrationProvider: Warning - Invalid treatment selected: $value');
+      selectedTreatment = null;
+    }
     notifyListeners();
   }
 
@@ -362,6 +398,189 @@ class RegistrationProvider extends ChangeNotifier {
     }
   }
 
+  // Registration method
+  Future<bool> registerPatient({
+    required BuildContext context,
+    required TreatmentTypeProvider treatmentProvider,
+  }) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      Uri url = Uri.parse(ApiUrls.registerPatient());
+      debugPrint('Register Patient API URL: $url');
+
+      // Prepare form data
+      Map<String, String> formData = {
+        'name': nameController.text,
+        'excecutive': '', // Empty as per requirements
+        'payment': selectedPaymentOption,
+        'phone': whatsappController.text,
+        'address': addressController.text,
+        'total_amount': totalAmountController.text.isEmpty ? '0' : totalAmountController.text,
+        'discount_amount': discountAmountController.text.isEmpty ? '0' : discountAmountController.text,
+        'advance_amount': advanceAmountController.text.isEmpty ? '0' : advanceAmountController.text,
+        'balance_amount': balanceAmountController.text.isEmpty ? '0' : balanceAmountController.text,
+        'date_nd_time': '${treatmentDateController.text}-$selectedHour:$selectedMinute $selectedPeriod',
+        'id': '', // Empty string as per requirements
+        'male': _getMaleTreatmentIds(treatmentProvider),
+        'female': _getFemaleTreatmentIds(treatmentProvider),
+        'branch': '',
+        'treatments': _getAllTreatmentIds(treatmentProvider),
+      };
+
+      debugPrint('=== Register Patient Data ===');
+      debugPrint('Form Data: $formData');
+
+      // Get auth token
+      String authToken = await SharedUtils.getString(StringClass.token);
+
+      var response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': 'Bearer $authToken', 
+        },
+        body: formData,
+      );
+
+      var data = jsonDecode(response.body);
+      debugPrint('Response: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        if (data['status'] == true) {
+          if (context.mounted) {
+            AppUtils.showToast(
+                context, 'Success', 'Successfully registered patient', true);
+            
+            // Generate and show PDF receipt
+            await _generateReceipt(context, treatmentProvider);
+            
+            // Reset form after successful registration
+            resetForm();
+          }
+          return true;
+        } else {
+          if (context.mounted) {
+            AppUtils.showToast(context, 'Error', 'Failed to register patient', false);
+          }
+          return false;
+        }
+      } else if (response.statusCode == 409) {
+        if (context.mounted) {
+          AppUtils.showToast(context, 'Error', 'Failed to register patient', false);
+        }
+        return false;
+      } else {
+        if (context.mounted) {
+          AppUtils.showToast(context, 'Error', 'Failed to register patient', false);
+        }
+        return false;
+      }
+    } catch (error) {
+      if (context.mounted) {
+        AppUtils.showToast(context, 'Error', 'Failed to register patient', false);
+      }
+      debugPrint('Error in registerPatient: $error');
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Helper method to get male treatment IDs
+  String _getMaleTreatmentIds(TreatmentTypeProvider treatmentProvider) {
+    List<String> maleIds = [];
+    for (var treatment in selectedTreatments) {
+      if (treatment.maleCount > 0) {
+        // Find the treatment ID from the API data
+        String? treatmentId = _getTreatmentIdByName(treatment.name, treatmentProvider);
+        if (treatmentId != null) {
+          maleIds.add(treatmentId);
+        }
+      }
+    }
+    print('RegistrationProvider: Male treatment IDs: ${maleIds.join(',')}');
+    return maleIds.join(',');
+  }
+
+  // Helper method to get female treatment IDs
+  String _getFemaleTreatmentIds(TreatmentTypeProvider treatmentProvider) {
+    List<String> femaleIds = [];
+    for (var treatment in selectedTreatments) {
+      if (treatment.femaleCount > 0) {
+        // Find the treatment ID from the API data
+        String? treatmentId = _getTreatmentIdByName(treatment.name, treatmentProvider);
+        if (treatmentId != null) {
+          femaleIds.add(treatmentId);
+        }
+      }
+    }
+    print('RegistrationProvider: Female treatment IDs: ${femaleIds.join(',')}');
+    return femaleIds.join(',');
+  }
+
+  // Helper method to get all treatment IDs
+  String _getAllTreatmentIds(TreatmentTypeProvider treatmentProvider) {
+    List<String> allIds = [];
+    for (var treatment in selectedTreatments) {
+      if (treatment.maleCount > 0 || treatment.femaleCount > 0) {
+        // Find the treatment ID from the API data
+        String? treatmentId = _getTreatmentIdByName(treatment.name, treatmentProvider);
+        if (treatmentId != null) {
+          allIds.add(treatmentId);
+        }
+      }
+    }
+    print('RegistrationProvider: All treatment IDs: ${allIds.join(',')}');
+    return allIds.join(',');
+  }
+
+  // Helper method to get treatment ID by name from API data
+  String? _getTreatmentIdByName(String treatmentName, TreatmentTypeProvider treatmentProvider) {
+    // Find the treatment in the API data by name
+    for (var apiTreatment in treatmentProvider.treatments) {
+      if (apiTreatment.name == treatmentName && apiTreatment.id != null) {
+        print('RegistrationProvider: Found treatment ID ${apiTreatment.id} for name "$treatmentName"');
+        return apiTreatment.id.toString();
+      }
+    }
+    print('RegistrationProvider: Warning - No treatment ID found for name "$treatmentName"');
+    return null;
+  }
+
+  // Method to generate PDF receipt
+  Future<void> _generateReceipt(BuildContext context, TreatmentTypeProvider treatmentProvider) async {
+    try {
+      print('RegistrationProvider: Generating PDF receipt');
+      
+      await InvoiceGenerator.generateAndShowReceipt(
+        context: context,
+        patientName: nameController.text,
+        address: addressController.text,
+        whatsappNumber: whatsappController.text,
+        treatmentDate: treatmentDateController.text,
+        treatmentTime: '$selectedHour:$selectedMinute $selectedPeriod',
+        selectedTreatments: selectedTreatments,
+        treatmentProvider: treatmentProvider,
+        totalAmount: totalAmountController.text.isEmpty ? '0' : totalAmountController.text,
+        discountAmount: discountAmountController.text.isEmpty ? '0' : discountAmountController.text,
+        advanceAmount: advanceAmountController.text.isEmpty ? '0' : advanceAmountController.text,
+        balanceAmount: balanceAmountController.text.isEmpty ? '0' : balanceAmountController.text,
+        selectedLocation: selectedLocation ?? '',
+        selectedBranch: selectedBranch ?? '',
+      );
+      
+      print('RegistrationProvider: PDF receipt generated successfully');
+    } catch (e) {
+      print('RegistrationProvider: Error generating PDF receipt - $e');
+      if (context.mounted) {
+        AppUtils.showToast(context, 'Error', 'Failed to generate PDF receipt', false);
+      }
+    }
+  }
+
   // Reset form method
   void resetForm() {
     nameController.clear();
@@ -376,8 +595,10 @@ class RegistrationProvider extends ChangeNotifier {
     selectedLocation = null;
     selectedBranch = null;
     selectedPaymentOption = 'Cash';
-    selectedHour = 'Hour';
-    selectedMinute = 'Minutes';
+    selectedHour = '12';
+    selectedMinute = '00';
+    selectedPeriod = 'AM';
+    selectedDateTime = null;
     selectedTreatments.clear();
     
     notifyListeners();

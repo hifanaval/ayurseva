@@ -43,15 +43,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   Future<void> _fetchInitialData() async {
     print('RegistrationScreen: Fetching initial data');
-    final registrationProvider = Provider.of<RegistrationProvider>(context, listen: false);
+    final registrationProvider = Provider.of<RegistrationProvider>(
+      context,
+      listen: false,
+    );
     final branchProvider = Provider.of<BranchProvider>(context, listen: false);
-    final treatmentProvider = Provider.of<TreatmentTypeProvider>(context, listen: false);
+    final treatmentProvider = Provider.of<TreatmentTypeProvider>(
+      context,
+      listen: false,
+    );
 
     try {
       // Fetch branch data (locations and branches)
       await registrationProvider.fetchBranchData(context, branchProvider);
       print('RegistrationScreen: Branch data fetched successfully');
-      
+
       // Fetch treatment data
       await registrationProvider.fetchTreatmentData(context, treatmentProvider);
       print('RegistrationScreen: Treatment data fetched successfully');
@@ -82,8 +88,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     return Scaffold(
       backgroundColor: ColorClass.white,
       body: SafeArea(
-        child: Consumer2<RegistrationProvider, BranchProvider>(
-          builder: (context, registrationProvider, branchProvider, child) {
+        child: Consumer2<RegistrationProvider, TreatmentTypeProvider>(
+          builder: (context, registrationProvider, treatmentProvider, child) {
             return Column(
               children: [
                 // Header
@@ -171,7 +177,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             hintText: 'Select the branch',
                             labelText: 'Branch',
                             value: registrationProvider.selectedBranch,
-                            items: registrationProvider.getFilteredBranches(branchProvider),
+                            items: registrationProvider.branches,
                             onChanged: registrationProvider.updateBranch,
                             validator: registrationProvider.validateBranch,
                           ),
@@ -403,51 +409,61 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           const SizedBox(height: 20),
 
                           // Treatment Date
-                         GestureDetector(
-  onTap: () async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: registrationProvider.selectedTreatmentDate ?? DateTime.now(),
-      firstDate: DateTime.now(), // Can't select past dates
-      lastDate: DateTime.now().add(const Duration(days: 365)), // 1 year from now
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: ColorClass.primaryColor,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: ColorClass.primaryText,
-            ),
-            dialogBackgroundColor: Colors.white,
-          ),
-          child: child!,
-        );
-      },
-    );
-    
-    if (pickedDate != null) {
-      registrationProvider.updateTreatmentDate(pickedDate);
-    }
-  },
-  child: AbsorbPointer(
-    child: CustomTextFormField(
-      controller: registrationProvider.treatmentDateController,
-      hintText: 'Select treatment date',
-      labelText: 'Treatment Date',
-      suffixIcon: Icon(
-        Icons.calendar_today,
-        color: ColorClass.primaryColor,
-      ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please select treatment date';
-        }
-        return null;
-      },
-    ),
-  ),
-),
+                          GestureDetector(
+                            onTap: () async {
+                              final DateTime? pickedDate = await showDatePicker(
+                                context: context,
+                                initialDate:
+                                    registrationProvider
+                                        .selectedTreatmentDate ??
+                                    DateTime.now(),
+                                firstDate:
+                                    DateTime.now(), // Can't select past dates
+                                lastDate: DateTime.now().add(
+                                  const Duration(days: 365),
+                                ), // 1 year from now
+                                builder: (context, child) {
+                                  return Theme(
+                                    data: Theme.of(context).copyWith(
+                                      colorScheme: ColorScheme.light(
+                                        primary: ColorClass.primaryColor,
+                                        onPrimary: Colors.white,
+                                        surface: Colors.white,
+                                        onSurface: ColorClass.primaryText,
+                                      ),
+                                      dialogBackgroundColor: Colors.white,
+                                    ),
+                                    child: child!,
+                                  );
+                                },
+                              );
+
+                              if (pickedDate != null) {
+                                registrationProvider.updateTreatmentDate(
+                                  pickedDate,
+                                );
+                              }
+                            },
+                            child: AbsorbPointer(
+                              child: CustomTextFormField(
+                                controller:
+                                    registrationProvider
+                                        .treatmentDateController,
+                                hintText: 'Select treatment date',
+                                labelText: 'Treatment Date',
+                                suffixIcon: Icon(
+                                  Icons.calendar_today,
+                                  color: ColorClass.primaryColor,
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please select treatment date';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ),
 
                           const SizedBox(height: 20),
 
@@ -459,81 +475,133 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                         GestureDetector(
-  onTap: () {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Container(
-        height: 280,
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text('Cancel', 
-                      style: TextStyleClass.poppinsSemiBold(16, ColorClass.grey.withValues(alpha: 0.5))),
-                ),
-                Text('Select Time', 
-                     style: TextStyleClass.poppinsSemiBold(18, ColorClass.primaryText)),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    // Handle time selection
-                  },
-                  child: Text('Done', 
-                      style: TextStyleClass.poppinsSemiBold(16, ColorClass.primaryColor)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: CupertinoDatePicker(
-                mode: CupertinoDatePickerMode.time,
-                use24hFormat: false, // Change to true for 24-hour format
-                onDateTimeChanged: (DateTime dateTime) {
-                  registrationProvider.updateSelectedDateTime(dateTime);
-                },
-                initialDateTime: DateTime.now(),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  },
-  child: Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-    decoration: BoxDecoration(
-      border: Border.all(color: ColorClass.grey),
-      borderRadius: BorderRadius.circular(8),
-    ),
-    child: Row(
-      children: [
-        Icon(Icons.schedule, color: ColorClass.primaryColor),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            registrationProvider.selectedDateTime != null 
-                ? DateFormat('hh:mm a').format(registrationProvider.selectedDateTime!)
-                : 'Select Time',
-            style: TextStyleClass.poppinsSemiBold(16, 
-                registrationProvider.selectedDateTime != null 
-                    ? ColorClass.primaryText 
-                    : ColorClass.grey.withValues(alpha: 0.5)),
-          ),
-        ),
-        Icon(Icons.keyboard_arrow_down, color: ColorClass.grey),
-      ],
-    ),
-  ),
-),
+                          GestureDetector(
+                            onTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                                backgroundColor: Colors.white,
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(20),
+                                  ),
+                                ),
+                                builder:
+                                    (context) => Container(
+                                      height: 280,
+                                      padding: const EdgeInsets.all(20),
+                                      child: Column(
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              TextButton(
+                                                onPressed:
+                                                    () =>
+                                                        Navigator.pop(context),
+                                                child: Text(
+                                                  'Cancel',
+                                                  style:
+                                                      TextStyleClass.poppinsSemiBold(
+                                                        16,
+                                                        ColorClass.grey
+                                                            .withValues(
+                                                              alpha: 0.5,
+                                                            ),
+                                                      ),
+                                                ),
+                                              ),
+                                              Text(
+                                                'Select Time',
+                                                style:
+                                                    TextStyleClass.poppinsSemiBold(
+                                                      18,
+                                                      ColorClass.primaryText,
+                                                    ),
+                                              ),
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.pop(context);
+                                                  // Handle time selection
+                                                },
+                                                child: Text(
+                                                  'Done',
+                                                  style:
+                                                      TextStyleClass.poppinsSemiBold(
+                                                        16,
+                                                        ColorClass.primaryColor,
+                                                      ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 20),
+                                          Expanded(
+                                            child: CupertinoDatePicker(
+                                              mode:
+                                                  CupertinoDatePickerMode.time,
+                                              use24hFormat:
+                                                  false, // Change to true for 24-hour format
+                                              onDateTimeChanged: (
+                                                DateTime dateTime,
+                                              ) {
+                                                registrationProvider
+                                                    .updateSelectedDateTime(
+                                                      dateTime,
+                                                    );
+                                              },
+                                              initialDateTime: DateTime.now(),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 15,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: ColorClass.grey),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.schedule,
+                                    color: ColorClass.primaryColor,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      registrationProvider.selectedDateTime !=
+                                              null
+                                          ? DateFormat('hh:mm a').format(
+                                            registrationProvider
+                                                .selectedDateTime!,
+                                          )
+                                          : 'Select Time',
+                                      style: TextStyleClass.poppinsSemiBold(
+                                        16,
+                                        registrationProvider.selectedDateTime !=
+                                                null
+                                            ? ColorClass.primaryText
+                                            : ColorClass.grey.withValues(
+                                              alpha: 0.5,
+                                            ),
+                                      ),
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.keyboard_arrow_down,
+                                    color: ColorClass.grey,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                           const SizedBox(height: 40),
                         ],
                       ),
@@ -541,10 +609,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ),
                 ),
                 // Save Button (matching treatment list screen style)
-                CustomButton(
-                  text: 'Save',
-                  onPressed: () => registrationProvider.submitForm(context),
-                  isLoading: false,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: CustomButton(
+                    text: 'Save',
+                    onPressed: () => registrationProvider.registerPatient(
+                      context: context,
+                      treatmentProvider: treatmentProvider,
+                    ),
+                    isLoading: registrationProvider.isLoading,
+                  ),
                 ),
               ],
             );

@@ -24,8 +24,7 @@ class TreatmentSelectionBottomSheet extends StatefulWidget {
   }) {
     showModalBottomSheet(
       context: context,
-      // isScrollControlled: true,
-      
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => TreatmentSelectionBottomSheet(
         selectedTreatments: selectedTreatments,
@@ -72,7 +71,9 @@ class _TreatmentSelectionBottomSheetState
         return Material(
           color: Colors.transparent,
           child: Container(
-            height: 500,
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+            ),
             decoration: BoxDecoration(
               color: ColorClass.white,
               borderRadius: const BorderRadius.only(
@@ -87,84 +88,89 @@ class _TreatmentSelectionBottomSheetState
                 top: 24,
                 bottom: MediaQuery.of(context).viewInsets.bottom + 24,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                // Handle bar
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: ColorClass.black.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Title
-                Text(
-                  'Choose Treatment',
-                  style: TextStyleClass.heading3(ColorClass.primaryText),
-                ),
-                const SizedBox(height: 20),
-
-                // Treatment Dropdown
-                CustomDropdown.field(
-                  hintText: 'Choose your treatment',
-                  labelText: 'Treatment',
-                  value: provider.selectedTreatment,
-                  items: provider.availableTreatments,
-                  onChanged: (value) {
-                    provider.updateSelectedTreatment(value);
-                  },
-                  validator: (value) {
-                    if (value == null) return 'Please select a treatment';
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 24),
-
-                // Add Patients Section
-                Text(
-                  'Add Patients',
-                  style: TextStyleClass.heading4(ColorClass.primaryText),
-                ),
-                const SizedBox(height: 16),
-
-                // Male Counter
-                _buildCounterRow('Male', provider.maleCount, true),
-                const SizedBox(height: 16),
-
-                // Female Counter
-                _buildCounterRow('Female', provider.femaleCount, false),
-                const SizedBox(height: 32),
-
-                // Save Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _saveTreatment,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorClass.primaryColor,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Handle bar
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: ColorClass.black.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
                     ),
-                    child: Text(
-                      'Save',
-                      style: TextStyleClass.buttonLarge(ColorClass.white),
+                    const SizedBox(height: 20),
+
+                    // Title
+                    Text(
+                      'Choose Treatment',
+                      style: TextStyleClass.heading3(ColorClass.primaryText),
                     ),
-                  ),
+                    const SizedBox(height: 20),
+
+                    // Treatment Dropdown
+                    CustomDropdown.field(
+                      hintText: 'Choose your treatment',
+                      labelText: 'Treatment',
+                      value: provider.availableTreatments.contains(provider.selectedTreatment) 
+                          ? provider.selectedTreatment 
+                          : null,
+                      items: provider.availableTreatments,
+                      onChanged: (value) {
+                        provider.updateSelectedTreatment(value);
+                      },
+                      validator: (value) {
+                        if (value == null) return 'Please select a treatment';
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Add Patients Section
+                    Text(
+                      'Add Patients',
+                      style: TextStyleClass.heading4(ColorClass.primaryText),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Male Counter
+                    _buildCounterRow('Male', provider.maleCount, true),
+                    const SizedBox(height: 16),
+
+                    // Female Counter
+                    _buildCounterRow('Female', provider.femaleCount, false),
+                    const SizedBox(height: 32),
+
+                    // Save Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _saveTreatment,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ColorClass.primaryColor,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'Save',
+                          style: TextStyleClass.buttonLarge(ColorClass.white),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ));
+        );
       },
     );
   }

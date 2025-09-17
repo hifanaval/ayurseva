@@ -1,4 +1,5 @@
 import 'package:ayurseva/screens/home_screen/provider/patients_data_provider.dart';
+import 'package:ayurseva/screens/home_screen/treatments_list_screen.dart';
 import 'package:ayurseva/screens/login_screen/login_screen.dart';
 import 'package:ayurseva/screens/login_screen/provider/auth_provider.dart';
 import 'package:ayurseva/screens/registration_screen/provider/branch_provider.dart';
@@ -16,6 +17,7 @@ void main() async {
   // Initialize SharedPreferences
   SharedPreferences prefs = await SharedPreferences.getInstance();
   SharedUtils.sharedPreferences = prefs;
+  
   
   runApp(const MyApp());
 }
@@ -44,6 +46,7 @@ class MyApp extends StatelessWidget {
         routes: {
           '/': (context) => const SplashScreen(),
           '/home': (context) => const LoginScreen(),
+          '/treatments': (context) => const TreatmentsListScreen(),
         },
       ),
     );

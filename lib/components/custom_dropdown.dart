@@ -109,9 +109,14 @@ class CustomDropdown extends StatelessWidget {
                 items: items.map((String item) {
                   return DropdownMenuItem<String>(
                     value: item,
-                    child: Text(
-                      item,
-                      style: TextStyleClass.bodyMedium(ColorClass.primaryText),
+                    child: SizedBox(
+                      width: 150, // Fixed width for inline dropdown
+                      child: Text(
+                        item,
+                        style: TextStyleClass.bodyMedium(ColorClass.primaryText),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                     ),
                   );
                 }).toList(),
@@ -171,9 +176,14 @@ class CustomDropdown extends StatelessWidget {
             items: items.map((String item) {
               return DropdownMenuItem<String>(
                 value: item,
-                child: Text(
-                  item,
-                  style: TextStyleClass.buttonLarge(ColorClass.primaryText),
+                child: SizedBox(
+                  width: 200, // Fixed width to prevent overflow
+                  child: Text(
+                    item,
+                    style: TextStyleClass.buttonLarge(ColorClass.primaryText),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
                 ),
               );
             }).toList(),
