@@ -91,7 +91,7 @@ class CustomDropdown extends StatelessWidget {
         Material(
           color: Colors.transparent,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: ColorClass.white,
               borderRadius: BorderRadius.circular(8),

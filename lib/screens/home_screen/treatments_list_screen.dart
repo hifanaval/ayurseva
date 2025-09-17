@@ -36,6 +36,10 @@ class _TreatmentsListScreenState extends State<TreatmentsListScreen> {
     // Fetch data when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final patientsProvider = Provider.of<PatientsDataProvider>(context, listen: false);
+      // Clear any existing search when returning to the screen
+      patientsProvider.clearSearch();
+      _searchController.clear();
+      // Fetch fresh data
       patientsProvider.fetchPatientsData(context);
     });
   }
@@ -54,6 +58,12 @@ class _TreatmentsListScreenState extends State<TreatmentsListScreen> {
         ),
       );
     }
+  }
+
+  void _clearSearch() {
+    final patientsProvider = Provider.of<PatientsDataProvider>(context, listen: false);
+    patientsProvider.clearSearch();
+    _searchController.clear();
   }
 
   // Convert Patient data to InvoiceData for PDF generation
@@ -165,47 +175,10 @@ class _TreatmentsListScreenState extends State<TreatmentsListScreen> {
                 Padding(
                   padding: const EdgeInsets.all(20),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       // Logout button
-                      GestureDetector(
-                        onTap: () {
-                          final authProvider = Provider.of<AuthProvider>(
-                            context,
-                            listen: false,
-                          );
-                          AppUtils.showLogoutConfirmation(context, () async {
-                            await authProvider.logout(context);
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: ColorClass.primaryColor),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Icon(
-                              //   Icons.logout,
-                              //   color: ColorClass.primaryColor,
-                              //   size: 18,
-                              // ),
-                              // const SizedBox(width: 4),
-                              Text(
-                                'Logout',
-                                style: TextStyleClass.bodySmall(
-                                  ColorClass.primaryColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                     
                       Stack(
                         children: [
                           Icon(
@@ -227,6 +200,23 @@ class _TreatmentsListScreenState extends State<TreatmentsListScreen> {
                           ),
                         ],
                       ),
+                      SizedBox(width: 10),
+                       InkWell(
+                        onTap: () {
+                          final authProvider = Provider.of<AuthProvider>(
+                            context,
+                            listen: false,
+                          );
+                          AppUtils.showLogoutConfirmation(context, () async {
+                            await authProvider.logout(context);
+                          });
+                        },
+                        child: Icon(
+                          Icons.logout,
+                          color: ColorClass.black,
+                          size: 20,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -237,8 +227,9 @@ class _TreatmentsListScreenState extends State<TreatmentsListScreen> {
                   child: CustomSearchBar(
                     controller: _searchController,
                     hintText: 'Search for treatments',
-                   onSearchPressed: () => patientsProvider.searchPatients(_searchController.text),
+                    onSearchPressed: () => patientsProvider.searchPatients(_searchController.text),
                     onChanged: (query) => patientsProvider.searchPatients(query),
+                    onClearPressed: _clearSearch,
                   ),
                 ),
             

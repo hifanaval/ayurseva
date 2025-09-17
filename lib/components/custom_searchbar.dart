@@ -3,11 +3,12 @@ import 'package:ayurseva/constants/color_class.dart';
 import 'package:ayurseva/constants/textstyle_class.dart';
 import 'package:flutter/material.dart';
 
-class CustomSearchBar extends StatelessWidget {
+class CustomSearchBar extends StatefulWidget {
   final TextEditingController controller;
   final String hintText;
   final VoidCallback onSearchPressed;
   final Function(String)? onChanged;
+  final VoidCallback? onClearPressed;
 
   const CustomSearchBar({
     Key? key,
@@ -15,10 +16,32 @@ class CustomSearchBar extends StatelessWidget {
     required this.hintText,
     required this.onSearchPressed,
     this.onChanged,
+    this.onClearPressed,
   }) : super(key: key);
 
   @override
+  State<CustomSearchBar> createState() => _CustomSearchBarState();
+}
+
+class _CustomSearchBarState extends State<CustomSearchBar> {
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(() {
+      setState(() {}); // Rebuild when text changes
+    });
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(() {});
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final bool hasText = widget.controller.text.isNotEmpty;
+    
     return Row(
       children: [
         Expanded(
@@ -32,11 +55,11 @@ class CustomSearchBar extends StatelessWidget {
               ),
             ),
             child: TextField(
-              controller: controller,
-              onChanged: onChanged,
+              controller: widget.controller,
+              onChanged: widget.onChanged,
               style: TextStyleClass.bodyMedium(ColorClass.black),
               decoration: InputDecoration(
-                hintText: hintText,
+                hintText: widget.hintText,
                 hintStyle: TextStyleClass.bodyMedium(
                   ColorClass.primaryText.withValues(alpha: 0.4),
                 ),
@@ -44,10 +67,23 @@ class CustomSearchBar extends StatelessWidget {
                   Icons.search,
                   color: ColorClass.black.withValues(alpha: 0.5),
                 ),
+                suffixIcon: hasText
+                    ? GestureDetector(
+                        onTap: () {
+                          widget.controller.clear();
+                          if (widget.onClearPressed != null) {
+                            widget.onClearPressed!();
+                          }
+                        },
+                        child: Icon(
+                          Icons.close,
+                          color: ColorClass.black.withValues(alpha: 0.5),
+                          size: 20,
+                        ),
+                      )
+                    : null,
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.all(
-                  12,
-                ),
+                contentPadding: const EdgeInsets.all(12),
               ),
             ),
           ),
@@ -57,7 +93,7 @@ class CustomSearchBar extends StatelessWidget {
           height: 40,
           width: 100,
           child: ElevatedButton(
-            onPressed: onSearchPressed,
+            onPressed: widget.onSearchPressed,
             style: ElevatedButton.styleFrom(
               backgroundColor: ColorClass.primaryColor,
               shape: RoundedRectangleBorder(

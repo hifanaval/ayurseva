@@ -793,8 +793,10 @@ class _FullScreenPDFViewer extends StatelessWidget {
     // Fetch patient data after navigation
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final patientsProvider = Provider.of<PatientsDataProvider>(context, listen: false);
+      // Clear any existing search when returning to treatment list
+      patientsProvider.clearSearch();
       patientsProvider.fetchPatientsData(context);
-      print('InvoiceGenerator: Patient data fetch initiated after navigation');
+      print('InvoiceGenerator: Patient data fetch initiated after navigation with cleared search');
     });
   }
 
