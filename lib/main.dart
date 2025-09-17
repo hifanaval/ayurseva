@@ -1,8 +1,10 @@
+import 'package:ayurseva/login_screen/login_screen.dart';
+import 'package:ayurseva/login_screen/provider/auth_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'splash_screen/splash_screen.dart';
 
 void main() {
-  print('Main: Starting AyurSeva application');
   runApp(const MyApp());
 }
 
@@ -11,19 +13,23 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('MyApp: Building main application widget');
-    return MaterialApp(
-      title: 'AyurSeva',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-        useMaterial3: true,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+      ],
+      child: MaterialApp(
+        title: 'AyurSeva',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+          useMaterial3: true,
+        ),
+        initialRoute: '/',
+        routes: {
+          '/': (context) => const SplashScreen(),
+          '/home': (context) => const LoginScreen(),
+        },
       ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const SplashScreen(),
-        '/home': (context) => const HomePage(),
-      },
     );
   }
 }
@@ -33,7 +39,6 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('HomePage: Building home page');
     return Scaffold(
       appBar: AppBar(
         title: const Text('AyurSeva'),

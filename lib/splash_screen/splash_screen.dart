@@ -1,9 +1,12 @@
-import 'package:ayurseva/components/icon_class.dart';
-import 'package:ayurseva/components/image_class.dart';
-import 'package:ayurseva/main.dart';
+import 'package:ayurseva/constants/icon_class.dart';
+import 'package:ayurseva/constants/image_class.dart';
+import 'package:ayurseva/home_screen/home_screen.dart';
+import 'package:ayurseva/login_screen/login_screen.dart';
+import 'package:ayurseva/login_screen/provider/auth_provider.dart';
 import 'package:ayurseva/utils/app_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
 import 'dart:async';
 
 class SplashScreen extends StatefulWidget {
@@ -53,12 +56,35 @@ class _SplashScreenState extends State<SplashScreen>
     // Navigate to main app after delay
     Timer(const Duration(milliseconds: 3000), () {
       if (mounted) {
-       AppUtils.navigateTo(context, HomePage());
+        _navigateToNextScreen();
       }
     });
   }
 
-  
+  // Navigate to next screen based on token
+  void _navigateToNextScreen() async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final hasToken = await authProvider.hasValidToken();
+      
+      if (hasToken) {
+        // User has valid token, navigate to home screen
+        if (mounted) {
+          AppUtils.navigateTo(context, const TreatmentsListScreen());
+        }
+      } else {
+        // No token, navigate to login screen
+        if (mounted) {
+          AppUtils.navigateTo(context, const LoginScreen());
+        }
+      }
+    } catch (e) {
+      // On error, default to login screen
+      if (mounted) {
+        AppUtils.navigateTo(context, const LoginScreen());
+      }
+    }
+  }
 
   @override
   void dispose() {
