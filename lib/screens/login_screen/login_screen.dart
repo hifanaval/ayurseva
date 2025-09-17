@@ -4,7 +4,7 @@ import 'package:ayurseva/constants/color_class.dart';
 import 'package:ayurseva/constants/icon_class.dart';
 import 'package:ayurseva/constants/image_class.dart';
 import 'package:ayurseva/constants/textstyle_class.dart';
-import 'package:ayurseva/login_screen/provider/auth_provider.dart';
+import 'package:ayurseva/screens/login_screen/provider/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';

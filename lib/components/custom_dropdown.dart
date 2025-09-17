@@ -88,33 +88,35 @@ class CustomDropdown extends StatelessWidget {
           style: TextStyleClass.bodyMedium(ColorClass.primaryText),
         ),
         const SizedBox(width: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: ColorClass.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: ColorClass.primaryColor.withValues(alpha: 0.3),
-            ),
-          ),
-          child: DropdownButtonHideUnderline(
-            
-            child: DropdownButton<String>(
-              value: value,
-              icon: Icon(
-                Icons.keyboard_arrow_down,
-                color: ColorClass.primaryColor,
+        Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: ColorClass.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: ColorClass.primaryColor.withValues(alpha: 0.3),
               ),
-              items: items.map((String item) {
-                return DropdownMenuItem<String>(
-                  value: item,
-                  child: Text(
-                    item,
-                    style: TextStyleClass.bodyMedium(ColorClass.primaryText),
-                  ),
-                );
-              }).toList(),
-              onChanged: onChanged,
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: value,
+                icon: Icon(
+                  Icons.keyboard_arrow_down,
+                  color: ColorClass.primaryColor,
+                ),
+                items: items.map((String item) {
+                  return DropdownMenuItem<String>(
+                    value: item,
+                    child: Text(
+                      item,
+                      style: TextStyleClass.bodyMedium(ColorClass.primaryText),
+                    ),
+                  );
+                }).toList(),
+                onChanged: onChanged,
+              ),
             ),
           ),
         ),
@@ -134,51 +136,55 @@ class CustomDropdown extends StatelessWidget {
           ),
           const SizedBox(height: 6),
         ],
-        DropdownButtonFormField<String>(
-          value: value,
-          decoration: InputDecoration(
-            hintText: hintText,
-            hintStyle: TextStyleClass.lightMedium(ColorClass.black.withValues(alpha: 0.4)),
-            filled: true,
-            fillColor: ColorClass.grey,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: ColorClass.black.withValues(alpha: 0.1)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: ColorClass.black.withValues(alpha: 0.1)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: ColorClass.primaryColor, width: 2),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.red),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.red, width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          ),
-          items: items.map((String item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: Text(
-                item,
-                style: TextStyleClass.buttonLarge(ColorClass.primaryText),
+        Material(
+          color: Colors.transparent,
+          child: DropdownButtonFormField<String>(
+            value: value,
+            decoration: InputDecoration(
+              
+              hintText: hintText,
+              hintStyle: TextStyleClass.lightMedium(ColorClass.black.withValues(alpha: 0.4)),
+              filled: true,
+              fillColor: ColorClass.grey.withValues(alpha: 0.4),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: ColorClass.black.withValues(alpha: 0.1)),
               ),
-            );
-          }).toList(),
-          onChanged: onChanged,
-          validator: validator,
-          icon: Icon(
-            Icons.keyboard_arrow_down,
-            color: ColorClass.primaryColor,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: ColorClass.black.withValues(alpha: 0.1)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: ColorClass.primaryColor, width: 2),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.red),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.red, width: 2),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+            ),
+            items: items.map((String item) {
+              return DropdownMenuItem<String>(
+                value: item,
+                child: Text(
+                  item,
+                  style: TextStyleClass.buttonLarge(ColorClass.primaryText),
+                ),
+              );
+            }).toList(),
+            onChanged: onChanged,
+            validator: validator,
+            icon: Icon(
+              Icons.keyboard_arrow_down,
+              color: ColorClass.primaryColor,
+            ),
+            style: TextStyleClass.buttonLarge(ColorClass.primaryText),
           ),
-          style: TextStyleClass.buttonLarge(ColorClass.primaryText),
         ),
       ],
     );

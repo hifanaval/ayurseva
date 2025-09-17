@@ -1,10 +1,12 @@
-import 'package:ayurseva/login_screen/login_screen.dart';
-import 'package:ayurseva/login_screen/provider/auth_provider.dart';
+import 'package:ayurseva/screens/home_screen/provider/patients_data_provider.dart';
+import 'package:ayurseva/screens/login_screen/login_screen.dart';
+import 'package:ayurseva/screens/login_screen/provider/auth_provider.dart';
+import 'package:ayurseva/screens/registration_screen/provider/registration_provider.dart';
 import 'package:ayurseva/utils/shared_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'splash_screen/splash_screen.dart';
+import 'screens/splash_screen/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +26,8 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => PatientsDataProvider()),
+        ChangeNotifierProvider(create: (_) => RegistrationProvider()),
       ],
       child: MaterialApp(
         title: 'AyurSeva',
@@ -42,34 +46,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('AyurSeva'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'Welcome to AyurSeva',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 20),
-            Text(
-              'Your Ayurvedic Health Companion',
-              style: TextStyle(fontSize: 16),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 

@@ -79,7 +79,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
                   )
                 : widget.suffixIcon,
             filled: true,
-            fillColor: ColorClass.grey,
+            fillColor: ColorClass.grey.withValues(alpha: 0.4),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: ColorClass.black.withValues(alpha: 0.1)),

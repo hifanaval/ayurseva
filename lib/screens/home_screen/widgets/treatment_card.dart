@@ -1,11 +1,12 @@
 // Treatment Card Widget
 import 'package:ayurseva/constants/color_class.dart';
 import 'package:ayurseva/constants/textstyle_class.dart';
-import 'package:ayurseva/models/treatment_booking.dart';
+import 'package:ayurseva/screens/home_screen/models/patient_list_model.dart';
+import 'package:ayurseva/utils/app_utils.dart';
 import 'package:flutter/material.dart';
 
 class TreatmentCard extends StatelessWidget {
-  final TreatmentBooking booking;
+  final Patient booking;
   final VoidCallback onViewDetails;
 
   const TreatmentCard({
@@ -39,14 +40,16 @@ class TreatmentCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      booking.customerName,
+                      booking.name??"--",
                       style: TextStyleClass.poppinsMedium(16, ColorClass.primaryText),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      booking.treatmentName,
-                      style: TextStyleClass.bodyMedium(ColorClass.primaryColor),
-                    ),
+                      Text(
+                       booking.patientdetailsSet?.isNotEmpty == true 
+                           ? booking.patientdetailsSet![0].treatmentName ?? "--"
+                           : "--",
+                        style: TextStyleClass.bodyMedium(ColorClass.primaryColor),
+                      ),
                   ],
                 ),
               ),
@@ -67,7 +70,7 @@ class TreatmentCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    booking.date,
+                    AppUtils.formatDate(booking.dateNdTime),
                     style: TextStyleClass.bodySmall(Colors.orange),
                   ),
                 ],
@@ -82,7 +85,7 @@ class TreatmentCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    booking.bookedBy,
+                    booking.user??"--",
                     style: TextStyleClass.bodySmall(Colors.orange),
                   ),
                 ],

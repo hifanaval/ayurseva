@@ -1,10 +1,8 @@
-import 'package:ayurseva/constants/global_variables.dart';
 import 'package:ayurseva/constants/icon_class.dart';
 import 'package:ayurseva/constants/image_class.dart';
-import 'package:ayurseva/home_screen/treatments_list_screen.dart';
-import 'package:ayurseva/login_screen/login_screen.dart';
-import 'package:ayurseva/login_screen/provider/auth_provider.dart';
-import 'package:ayurseva/utils/app_utils.dart';
+import 'package:ayurseva/screens/home_screen/treatments_list_screen.dart';
+import 'package:ayurseva/screens/login_screen/login_screen.dart';
+import 'package:ayurseva/screens/login_screen/provider/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -71,18 +69,27 @@ class _SplashScreenState extends State<SplashScreen>
       if (hasToken) {
         // User has valid token, navigate to home screen
         if (mounted) {
-          AppUtils.navigateTo(context, const TreatmentsListScreen());
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const TreatmentsListScreen()),
+          );
         }
       } else {
         // No token, navigate to login screen
         if (mounted) {
-          AppUtils.navigateTo(context, const LoginScreen());
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+          );
         }
       }
     } catch (e) {
       // On error, default to login screen
       if (mounted) {
-        AppUtils.navigateTo(context, const LoginScreen());
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
       }
     }
   }
