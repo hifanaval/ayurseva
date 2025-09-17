@@ -1,8 +1,10 @@
 import 'package:ayurseva/components/custom_dropdown.dart';
 import 'package:ayurseva/constants/color_class.dart';
 import 'package:ayurseva/constants/textstyle_class.dart';
+import 'package:ayurseva/screens/registration_screen/models/selected_treatment_model.dart';
 import 'package:ayurseva/screens/registration_screen/registration_screen.dart';
 import 'package:ayurseva/screens/registration_screen/provider/registration_provider.dart';
+import 'package:ayurseva/screens/registration_screen/provider/treatment_type_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -49,13 +51,6 @@ class _TreatmentSelectionBottomSheetState
     });
   }
 
-  void _incrementCount(bool isMale) {
-    context.read<RegistrationProvider>().incrementCount(isMale);
-  }
-
-  void _decrementCount(bool isMale) {
-    context.read<RegistrationProvider>().decrementCount(isMale);
-  }
 
   void _saveTreatment() {
     final provider = context.read<RegistrationProvider>();
@@ -114,19 +109,23 @@ class _TreatmentSelectionBottomSheetState
                     const SizedBox(height: 20),
 
                     // Treatment Dropdown
-                    CustomDropdown.field(
-                      hintText: 'Choose your treatment',
-                      labelText: 'Treatment',
-                      value: provider.availableTreatments.contains(provider.selectedTreatment) 
-                          ? provider.selectedTreatment 
-                          : null,
-                      items: provider.availableTreatments,
-                      onChanged: (value) {
-                        provider.updateSelectedTreatment(value);
-                      },
-                      validator: (value) {
-                        if (value == null) return 'Please select a treatment';
-                        return null;
+                    Consumer<TreatmentTypeProvider>(
+                      builder: (context, treatmentProvider, child) {
+                        return CustomDropdown.field(
+                          hintText: 'Choose your treatment',
+                          labelText: 'Treatment',
+                          value: treatmentProvider.isValidActiveTreatment(provider.selectedTreatment ?? '') 
+                              ? provider.selectedTreatment 
+                              : null,
+                          items: treatmentProvider.getActiveTreatmentNames(),
+                          onChanged: (value) {
+                            provider.updateSelectedTreatment(value, treatmentProvider);
+                          },
+                          validator: (value) {
+                            if (value == null) return 'Please select a treatment';
+                            return null;
+                          },
+                        );
                       },
                     ),
 
@@ -200,7 +199,7 @@ class _TreatmentSelectionBottomSheetState
 
         // Decrease Button
         GestureDetector(
-          onTap: () => _decrementCount(isMale),
+          onTap: () => context.read<RegistrationProvider>().decrementCount(isMale),
           child: Container(
             width: 40,
             height: 40,
@@ -235,7 +234,7 @@ class _TreatmentSelectionBottomSheetState
 
         // Increase Button
         GestureDetector(
-          onTap: () => _incrementCount(isMale),
+          onTap: () => context.read<RegistrationProvider>().incrementCount(isMale),
           child: Container(
             width: 40,
             height: 40,

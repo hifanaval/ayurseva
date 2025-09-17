@@ -1,15 +1,13 @@
+import 'package:ayurseva/screens/registration_screen/models/selected_treatment_model.dart';
 import 'package:flutter/material.dart';
-import 'package:ayurseva/screens/registration_screen/registration_screen.dart';
-import 'package:ayurseva/screens/registration_screen/provider/branch_provider.dart';
 import 'package:ayurseva/screens/registration_screen/provider/treatment_type_provider.dart';
 import 'package:ayurseva/constants/api_urls.dart';
 import 'package:ayurseva/constants/string_class.dart';
 import 'package:ayurseva/utils/shared_utils.dart';
 import 'package:ayurseva/utils/app_utils.dart';
-import 'package:ayurseva/utils/pdf_generator.dart';
+import 'package:ayurseva/screens/pdf_generator/pdf_generator_service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:intl/intl.dart';
 
 class RegistrationProvider extends ChangeNotifier {
   // Loading state
@@ -23,10 +21,12 @@ class RegistrationProvider extends ChangeNotifier {
   final TextEditingController whatsappController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
   final TextEditingController totalAmountController = TextEditingController();
-  final TextEditingController discountAmountController = TextEditingController();
+  final TextEditingController discountAmountController =
+      TextEditingController();
   final TextEditingController advanceAmountController = TextEditingController();
   final TextEditingController balanceAmountController = TextEditingController();
   final TextEditingController treatmentDateController = TextEditingController();
+  final TextEditingController dateRangeController = TextEditingController();
 
   // Dropdown values
   String? selectedLocation;
@@ -49,18 +49,14 @@ class RegistrationProvider extends ChangeNotifier {
   int femaleCount = 0;
   late List<Treatment> treatments;
 
-  // Available treatments list (will be populated from TreatmentTypeProvider)
-  List<String> availableTreatments = [];
+  DateTime? selectedTreatmentDate;
+  DateTime? tempSelectedDate;
+  DateTime? focusedDay;
+  DateTimeRange? selectedDateRange;
 
   // Static locations
-  final List<String> locations = [
-    'Kochi,kerala',
-    'Kozhikode', 
-    'Kumarakom'
-  ];
-  
-  // Branches from API
-  List<String> branches = [];
+  final List<String> locations = ['Kochi,kerala', 'Kozhikode', 'Kumarakom'];
+
   final List<String> hours = List.generate(
     24,
     (index) => index.toString().padLeft(2, '0'),
@@ -70,112 +66,101 @@ class RegistrationProvider extends ChangeNotifier {
     (index) => index.toString().padLeft(2, '0'),
   );
 
- void updateSelectedTime(TimeOfDay time) {
+  void updateSelectedTime(TimeOfDay time) {
     selectedTime = time;
     notifyListeners();
   }
-  
+
   void updateSelectedDateTime(DateTime dateTime) {
     selectedDateTime = dateTime;
-    
+
     // Update the individual time components for PDF generation
     final timeOfDay = TimeOfDay.fromDateTime(dateTime);
     selectedHour = timeOfDay.hourOfPeriod.toString().padLeft(2, '0');
     selectedMinute = timeOfDay.minute.toString().padLeft(2, '0');
     selectedPeriod = timeOfDay.period == DayPeriod.am ? 'AM' : 'PM';
-    
-    print('RegistrationProvider: Updated time - $selectedHour:$selectedMinute $selectedPeriod');
+
+    debugPrint(
+      'RegistrationProvider: Updated time - $selectedHour:$selectedMinute $selectedPeriod',
+    );
     notifyListeners();
   }
-  
+
   void updateTimeFromWheels() {
     final hour = selectedHourIndex + 1;
     final minute = selectedMinuteIndex;
     final time = TimeOfDay(
-      hour: selectedPeriod == 'AM' 
-          ? (hour == 12 ? 0 : hour)
-          : (hour == 12 ? 12 : hour + 12),
+      hour:
+          selectedPeriod == 'AM'
+              ? (hour == 12 ? 0 : hour)
+              : (hour == 12 ? 12 : hour + 12),
       minute: minute,
     );
     selectedTime = time;
     notifyListeners();
   }
-  
- DateTime? selectedTreatmentDate;
-  DateTime? tempSelectedDate;
-  DateTime? focusedDay;
-  DateTimeRange? selectedDateRange;
-  
-  final TextEditingController dateRangeController = TextEditingController();
-  
+
   void updateTreatmentDate(DateTime date) {
     selectedTreatmentDate = date;
-    treatmentDateController.text = DateFormat('dd/MM/yyyy').format(date);
+    treatmentDateController.text = AppUtils.formatDate(date);
     notifyListeners();
   }
-  
+
   void updateCalendarSelection(DateTime selectedDay, DateTime focusedDay) {
     selectedTreatmentDate = selectedDay;
     this.focusedDay = focusedDay;
     notifyListeners();
   }
-  
+
   void confirmDateSelection() {
     if (selectedTreatmentDate != null) {
-      treatmentDateController.text = DateFormat('dd/MM/yyyy').format(selectedTreatmentDate!);
+      treatmentDateController.text = AppUtils.formatDate(
+        selectedTreatmentDate!,
+      );
     }
     notifyListeners();
   }
-  
+
   void updateDateRange(DateTimeRange range) {
     selectedDateRange = range;
-    dateRangeController.text = 
-        '${DateFormat('dd/MM/yyyy').format(range.start)} - ${DateFormat('dd/MM/yyyy').format(range.end)}';
+    dateRangeController.text =
+        '${AppUtils.formatDate(range.start)} - ${AppUtils.formatDate(range.end)}';
     notifyListeners();
   }
-  
- 
+
   // Validation methods
-  String? validateName(String? value) {
+  String? validateRequired(String? value, String fieldName) {
     if (value == null || value.isEmpty) {
-      return 'Name is required';
+      return '$fieldName is required';
     }
     return null;
   }
 
-  String? validateWhatsApp(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'WhatsApp number is required';
+  String? validateSelection(String? value, String fieldName) {
+    if (value == null) {
+      return 'Please select a $fieldName';
     }
     return null;
   }
 
-  String? validateAddress(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Address is required';
-    }
-    return null;
-  }
-
-  String? validateLocation(String? value) {
-    if (value == null) return 'Please select a location';
-    return null;
-  }
-
-  String? validateBranch(String? value) {
-    if (value == null) return 'Please select a branch';
-    return null;
-  }
+  // Convenience methods for specific fields
+  String? validateName(String? value) => validateRequired(value, 'Name');
+  String? validateWhatsApp(String? value) =>
+      validateRequired(value, 'WhatsApp number');
+  String? validateAddress(String? value) => validateRequired(value, 'Address');
+  String? validateLocation(String? value) =>
+      validateSelection(value, 'location');
+  String? validateBranch(String? value) => validateSelection(value, 'branch');
 
   // Dropdown update methods
   void updateLocation(String? value) {
-    print('RegistrationProvider: Updating location to: $value');
+    debugPrint('RegistrationProvider: Updating location to: $value');
     selectedLocation = value;
     notifyListeners();
   }
 
   void updateBranch(String? value) {
-    print('RegistrationProvider: Updating branch to: $value');
+    debugPrint('RegistrationProvider: Updating branch to: $value');
     selectedBranch = value;
     notifyListeners();
   }
@@ -196,94 +181,25 @@ class RegistrationProvider extends ChangeNotifier {
   }
 
   // Data fetching methods
-  Future<void> fetchBranchData(BuildContext context, BranchProvider branchProvider) async {
-    print('RegistrationProvider: Fetching branch data');
-    try {
-      await branchProvider.fetchBranchData(context);
-      
-      if (branchProvider.branches != null) {
-        // Extract branch names from API data
-        List<String> branchNames = [];
-        
-        for (var branch in branchProvider.branches!) {
-          if (branch.name != null) {
-            branchNames.add(branch.name!);
-          }
-        }
-        
-        branches = branchNames;
-        
-        print('RegistrationProvider: Branch data processed - ${branches.length} branches from API');
-        print('RegistrationProvider: Using static locations: ${locations.join(", ")}');
-        notifyListeners();
-      }
-    } catch (e) {
-      print('RegistrationProvider: Error fetching branch data - $e');
-    }
-  }
-
-  Future<void> fetchTreatmentData(BuildContext context, TreatmentTypeProvider treatmentProvider) async {
-    print('RegistrationProvider: Fetching treatment data');
-    try {
-      await treatmentProvider.fetchTreatmentData(context);
-      
-      if (treatmentProvider.treatments.isNotEmpty) {
-        // Get unique treatment names to avoid duplicate dropdown values
-        final treatmentNames = treatmentProvider.treatments
-            .where((treatment) => treatment.isActive == true && treatment.name != null)
-            .map((treatment) => treatment.name!)
-            .toSet() // Use Set to remove duplicates
-            .toList();
-        
-        availableTreatments = treatmentNames;
-        
-        // Clear selected treatment if it's no longer available
-        if (selectedTreatment != null && !availableTreatments.contains(selectedTreatment)) {
-          selectedTreatment = null;
-          print('RegistrationProvider: Cleared invalid selected treatment');
-        }
-        
-        print('RegistrationProvider: Treatment data processed - ${availableTreatments.length} unique active treatments');
-        notifyListeners();
-      }
-    } catch (e) {
-      print('RegistrationProvider: Error fetching treatment data - $e');
-    }
-  }
-
-  // Method to get all branches from API (no filtering)
-  List<String> getAllBranches(BranchProvider branchProvider) {
-    if (branchProvider.branches == null) {
-      return branches;
-    }
-    
-    List<String> allBranches = [];
-    for (var branch in branchProvider.branches!) {
-      if (branch.name != null) {
-        allBranches.add(branch.name!);
-      }
-    }
-    
-    print('RegistrationProvider: Showing all branches from API: ${allBranches.length} branches');
-    return allBranches;
-  }
 
   // Treatment methods
   void updateSelectedTreatments(List<Treatment> treatments) {
-    print('RegistrationProvider: Updating selected treatments with ${treatments.length} treatments');
+    debugPrint(
+      'RegistrationProvider: Updating selected treatments with ${treatments.length} treatments',
+    );
     selectedTreatments = treatments;
     notifyListeners();
   }
 
   void removeTreatment(int index) {
-    print('RegistrationProvider: Removing treatment at index $index');
+    debugPrint('RegistrationProvider: Removing treatment at index $index');
     selectedTreatments.removeAt(index);
     notifyListeners();
   }
 
   // Treatment selection bottom sheet methods
   void initializeTreatmentSelection() {
-    print('RegistrationProvider: Initializing treatment selection');
+    debugPrint('RegistrationProvider: Initializing treatment selection');
     treatments = List.from(selectedTreatments);
     selectedTreatment = null;
     maleCount = 0;
@@ -291,22 +207,29 @@ class RegistrationProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateSelectedTreatment(String? value) {
-    print('RegistrationProvider: Updating selected treatment to: $value');
+  void updateSelectedTreatment(
+    String? value,
+    TreatmentTypeProvider treatmentProvider,
+  ) {
+    debugPrint('RegistrationProvider: Updating selected treatment to: $value');
     // Ensure the selected treatment is valid and exists in available treatments
-    if (value != null && availableTreatments.contains(value)) {
+    if (value != null && treatmentProvider.isValidActiveTreatment(value)) {
       selectedTreatment = value;
     } else if (value == null) {
       selectedTreatment = null;
     } else {
-      print('RegistrationProvider: Warning - Invalid treatment selected: $value');
+      debugPrint(
+        'RegistrationProvider: Warning - Invalid treatment selected: $value',
+      );
       selectedTreatment = null;
     }
     notifyListeners();
   }
 
   void incrementCount(bool isMale) {
-    print('RegistrationProvider: Incrementing ${isMale ? 'male' : 'female'} count');
+    debugPrint(
+      'RegistrationProvider: Incrementing ${isMale ? 'male' : 'female'} count',
+    );
     if (isMale) {
       maleCount++;
     } else {
@@ -316,7 +239,9 @@ class RegistrationProvider extends ChangeNotifier {
   }
 
   void decrementCount(bool isMale) {
-    print('RegistrationProvider: Decrementing ${isMale ? 'male' : 'female'} count');
+    debugPrint(
+      'RegistrationProvider: Decrementing ${isMale ? 'male' : 'female'} count',
+    );
     if (isMale && maleCount > 0) {
       maleCount--;
     } else if (!isMale && femaleCount > 0) {
@@ -326,7 +251,9 @@ class RegistrationProvider extends ChangeNotifier {
   }
 
   void saveTreatment() {
-    print('RegistrationProvider: Saving treatment - $selectedTreatment, Male: $maleCount, Female: $femaleCount');
+    debugPrint(
+      'RegistrationProvider: Saving treatment - $selectedTreatment, Male: $maleCount, Female: $femaleCount',
+    );
     if (selectedTreatment != null && (maleCount > 0 || femaleCount > 0)) {
       final treatment = Treatment(
         name: selectedTreatment!,
@@ -339,61 +266,25 @@ class RegistrationProvider extends ChangeNotifier {
         (t) => t.name == selectedTreatment,
       );
       if (existingIndex != -1) {
-        print('RegistrationProvider: Updating existing treatment at index $existingIndex');
+        debugPrint(
+          'RegistrationProvider: Updating existing treatment at index $existingIndex',
+        );
         treatments[existingIndex] = treatment;
       } else {
-        print('RegistrationProvider: Adding new treatment');
+        debugPrint('RegistrationProvider: Adding new treatment');
         treatments.add(treatment);
       }
 
       updateSelectedTreatments(treatments);
-      
+
       // Reset selection state
       selectedTreatment = null;
       maleCount = 0;
       femaleCount = 0;
       notifyListeners();
     } else {
-      print('RegistrationProvider: Cannot save treatment - missing required data');
-    }
-  }
-
-  // Date selection method
-  Future<void> selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2025),
-    );
-    if (picked != null) {
-      treatmentDateController.text =
-          "${picked.day}/${picked.month}/${picked.year}";
-      notifyListeners();
-    }
-  }
-
-  // Form submission method
-  Future<void> submitForm(BuildContext context) async {
-    if (formKey.currentState!.validate()) {
-      // TODO: Implement form submission logic
-      print('Form submitted successfully');
-      print('Name: ${nameController.text}');
-      print('WhatsApp: ${whatsappController.text}');
-      print('Address: ${addressController.text}');
-      print('Location: $selectedLocation');
-      print('Branch: $selectedBranch');
-      print('Payment Option: $selectedPaymentOption');
-      print('Treatment Date: ${treatmentDateController.text}');
-      print('Treatment Time: $selectedHour:$selectedMinute');
-      print('Selected Treatments: ${selectedTreatments.length}');
-      
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Registration submitted successfully!'),
-          backgroundColor: Colors.green,
-        ),
+      debugPrint(
+        'RegistrationProvider: Cannot save treatment - missing required data',
       );
     }
   }
@@ -413,15 +304,28 @@ class RegistrationProvider extends ChangeNotifier {
       // Prepare form data
       Map<String, String> formData = {
         'name': nameController.text,
-        'excecutive': '', // Empty as per requirements
+        'excecutive': 'Executive Name', // Empty as per requirements
         'payment': selectedPaymentOption,
         'phone': whatsappController.text,
         'address': addressController.text,
-        'total_amount': totalAmountController.text.isEmpty ? '0' : totalAmountController.text,
-        'discount_amount': discountAmountController.text.isEmpty ? '0' : discountAmountController.text,
-        'advance_amount': advanceAmountController.text.isEmpty ? '0' : advanceAmountController.text,
-        'balance_amount': balanceAmountController.text.isEmpty ? '0' : balanceAmountController.text,
-        'date_nd_time': '${treatmentDateController.text}-$selectedHour:$selectedMinute $selectedPeriod',
+        'total_amount':
+            totalAmountController.text.isEmpty
+                ? '0'
+                : totalAmountController.text,
+        'discount_amount':
+            discountAmountController.text.isEmpty
+                ? '0'
+                : discountAmountController.text,
+        'advance_amount':
+            advanceAmountController.text.isEmpty
+                ? '0'
+                : advanceAmountController.text,
+        'balance_amount':
+            balanceAmountController.text.isEmpty
+                ? '0'
+                : balanceAmountController.text,
+        'date_nd_time':
+            '${treatmentDateController.text}-$selectedHour:$selectedMinute $selectedPeriod',
         'id': '', // Empty string as per requirements
         'male': _getMaleTreatmentIds(treatmentProvider),
         'female': _getFemaleTreatmentIds(treatmentProvider),
@@ -439,47 +343,71 @@ class RegistrationProvider extends ChangeNotifier {
         url,
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': 'Bearer $authToken', 
+          'Authorization': 'Bearer $authToken',
         },
         body: formData,
       );
 
       var data = jsonDecode(response.body);
       debugPrint('Response: ${response.body}');
-      
+
       if (response.statusCode == 200) {
         if (data['status'] == true) {
           if (context.mounted) {
             AppUtils.showToast(
-                context, 'Success', 'Successfully registered patient', true);
-            
+              context,
+              'Success',
+              'Successfully registered patient',
+              true,
+            );
+
             // Generate and show PDF receipt
             await _generateReceipt(context, treatmentProvider);
-            
+
             // Reset form after successful registration
             resetForm();
           }
           return true;
         } else {
           if (context.mounted) {
-            AppUtils.showToast(context, 'Error', 'Failed to register patient', false);
+            AppUtils.showToast(
+              context,
+              'Error',
+              'Failed to register patient',
+              false,
+            );
           }
           return false;
         }
       } else if (response.statusCode == 409) {
         if (context.mounted) {
-          AppUtils.showToast(context, 'Error', 'Failed to register patient', false);
+          AppUtils.showToast(
+            context,
+            'Error',
+            'Failed to register patient',
+            false,
+          );
         }
         return false;
       } else {
         if (context.mounted) {
-          AppUtils.showToast(context, 'Error', 'Failed to register patient', false);
+          AppUtils.showToast(
+            context,
+            'Error',
+            'Failed to register patient',
+            false,
+          );
         }
         return false;
       }
     } catch (error) {
       if (context.mounted) {
-        AppUtils.showToast(context, 'Error', 'Failed to register patient', false);
+        AppUtils.showToast(
+          context,
+          'Error',
+          'Failed to register patient',
+          false,
+        );
       }
       debugPrint('Error in registerPatient: $error');
       return false;
@@ -489,73 +417,98 @@ class RegistrationProvider extends ChangeNotifier {
     }
   }
 
-  // Helper method to get male treatment IDs
+  // Helper method to get male treatment ID (single value only)
   String _getMaleTreatmentIds(TreatmentTypeProvider treatmentProvider) {
-    List<String> maleIds = [];
+    debugPrint('RegistrationProvider: Getting male treatment ID');
+    
     for (var treatment in selectedTreatments) {
       if (treatment.maleCount > 0) {
         // Find the treatment ID from the API data
-        String? treatmentId = _getTreatmentIdByName(treatment.name, treatmentProvider);
+        String? treatmentId = treatmentProvider.getTreatmentIdByName(
+          treatment.name,
+        );
         if (treatmentId != null) {
-          maleIds.add(treatmentId);
+          debugPrint(
+            'RegistrationProvider: Found male treatment ID $treatmentId for name "${treatment.name}"',
+          );
+          return treatmentId; // Return first treatment ID found
+        } else {
+          debugPrint(
+            'RegistrationProvider: Warning - No treatment ID found for name "${treatment.name}"',
+          );
         }
       }
     }
-    print('RegistrationProvider: Male treatment IDs: ${maleIds.join(',')}');
-    return maleIds.join(',');
+    
+    debugPrint('RegistrationProvider: No male treatment ID found');
+    return ''; // Return empty string if no male treatment found
   }
 
-  // Helper method to get female treatment IDs
+  // Helper method to get female treatment ID (single value only)
   String _getFemaleTreatmentIds(TreatmentTypeProvider treatmentProvider) {
-    List<String> femaleIds = [];
+    debugPrint('RegistrationProvider: Getting female treatment ID');
+    
     for (var treatment in selectedTreatments) {
       if (treatment.femaleCount > 0) {
         // Find the treatment ID from the API data
-        String? treatmentId = _getTreatmentIdByName(treatment.name, treatmentProvider);
+        String? treatmentId = treatmentProvider.getTreatmentIdByName(
+          treatment.name,
+        );
         if (treatmentId != null) {
-          femaleIds.add(treatmentId);
+          debugPrint(
+            'RegistrationProvider: Found female treatment ID $treatmentId for name "${treatment.name}"',
+          );
+          return treatmentId; // Return first treatment ID found
+        } else {
+          debugPrint(
+            'RegistrationProvider: Warning - No treatment ID found for name "${treatment.name}"',
+          );
         }
       }
     }
-    print('RegistrationProvider: Female treatment IDs: ${femaleIds.join(',')}');
-    return femaleIds.join(',');
+    
+    debugPrint('RegistrationProvider: No female treatment ID found');
+    return ''; // Return empty string if no female treatment found
   }
 
-  // Helper method to get all treatment IDs
+  // Helper method to get all treatment IDs (comma-separated for treatments field)
   String _getAllTreatmentIds(TreatmentTypeProvider treatmentProvider) {
+    debugPrint('RegistrationProvider: Getting all treatment IDs');
     List<String> allIds = [];
+    
     for (var treatment in selectedTreatments) {
       if (treatment.maleCount > 0 || treatment.femaleCount > 0) {
         // Find the treatment ID from the API data
-        String? treatmentId = _getTreatmentIdByName(treatment.name, treatmentProvider);
+        String? treatmentId = treatmentProvider.getTreatmentIdByName(
+          treatment.name,
+        );
         if (treatmentId != null) {
           allIds.add(treatmentId);
+          debugPrint(
+            'RegistrationProvider: Found treatment ID $treatmentId for name "${treatment.name}"',
+          );
+        } else {
+          debugPrint(
+            'RegistrationProvider: Warning - No treatment ID found for name "${treatment.name}"',
+          );
         }
       }
     }
-    print('RegistrationProvider: All treatment IDs: ${allIds.join(',')}');
-    return allIds.join(',');
-  }
-
-  // Helper method to get treatment ID by name from API data
-  String? _getTreatmentIdByName(String treatmentName, TreatmentTypeProvider treatmentProvider) {
-    // Find the treatment in the API data by name
-    for (var apiTreatment in treatmentProvider.treatments) {
-      if (apiTreatment.name == treatmentName && apiTreatment.id != null) {
-        print('RegistrationProvider: Found treatment ID ${apiTreatment.id} for name "$treatmentName"');
-        return apiTreatment.id.toString();
-      }
-    }
-    print('RegistrationProvider: Warning - No treatment ID found for name "$treatmentName"');
-    return null;
+    
+    String result = allIds.join(',');
+    debugPrint('RegistrationProvider: All treatment IDs: $result');
+    return result;
   }
 
   // Method to generate PDF receipt
-  Future<void> _generateReceipt(BuildContext context, TreatmentTypeProvider treatmentProvider) async {
+  Future<void> _generateReceipt(
+    BuildContext context,
+    TreatmentTypeProvider treatmentProvider,
+  ) async {
     try {
-      print('RegistrationProvider: Generating PDF receipt');
-      
-      await InvoiceGenerator.generateAndShowReceipt(
+      debugPrint('RegistrationProvider: Generating PDF receipt');
+
+      await PdfGeneratorService.generateAndShowReceipt(
         context: context,
         patientName: nameController.text,
         address: addressController.text,
@@ -564,19 +517,36 @@ class RegistrationProvider extends ChangeNotifier {
         treatmentTime: '$selectedHour:$selectedMinute $selectedPeriod',
         selectedTreatments: selectedTreatments,
         treatmentProvider: treatmentProvider,
-        totalAmount: totalAmountController.text.isEmpty ? '0' : totalAmountController.text,
-        discountAmount: discountAmountController.text.isEmpty ? '0' : discountAmountController.text,
-        advanceAmount: advanceAmountController.text.isEmpty ? '0' : advanceAmountController.text,
-        balanceAmount: balanceAmountController.text.isEmpty ? '0' : balanceAmountController.text,
+        totalAmount:
+            totalAmountController.text.isEmpty
+                ? '0'
+                : totalAmountController.text,
+        discountAmount:
+            discountAmountController.text.isEmpty
+                ? '0'
+                : discountAmountController.text,
+        advanceAmount:
+            advanceAmountController.text.isEmpty
+                ? '0'
+                : advanceAmountController.text,
+        balanceAmount:
+            balanceAmountController.text.isEmpty
+                ? '0'
+                : balanceAmountController.text,
         selectedLocation: selectedLocation ?? '',
         selectedBranch: selectedBranch ?? '',
       );
-      
-      print('RegistrationProvider: PDF receipt generated successfully');
+
+      debugPrint('RegistrationProvider: PDF receipt generated successfully');
     } catch (e) {
-      print('RegistrationProvider: Error generating PDF receipt - $e');
+      debugPrint('RegistrationProvider: Error generating PDF receipt - $e');
       if (context.mounted) {
-        AppUtils.showToast(context, 'Error', 'Failed to generate PDF receipt', false);
+        AppUtils.showToast(
+          context,
+          'Error',
+          'Failed to generate PDF receipt',
+          false,
+        );
       }
     }
   }
@@ -591,7 +561,7 @@ class RegistrationProvider extends ChangeNotifier {
     advanceAmountController.clear();
     balanceAmountController.clear();
     treatmentDateController.clear();
-    
+
     selectedLocation = null;
     selectedBranch = null;
     selectedPaymentOption = 'Cash';
@@ -600,21 +570,7 @@ class RegistrationProvider extends ChangeNotifier {
     selectedPeriod = 'AM';
     selectedDateTime = null;
     selectedTreatments.clear();
-    
-    notifyListeners();
-  }
 
-  // Dispose method
-  @override
-  void dispose() {
-    nameController.dispose();
-    whatsappController.dispose();
-    addressController.dispose();
-    totalAmountController.dispose();
-    discountAmountController.dispose();
-    advanceAmountController.dispose();
-    balanceAmountController.dispose();
-    treatmentDateController.dispose();
-    super.dispose();
+    notifyListeners();
   }
 }

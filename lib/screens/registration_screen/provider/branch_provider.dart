@@ -37,4 +37,46 @@ class BranchProvider extends ChangeNotifier {
     isLoading = value;
     notifyListeners();
   }
+
+  /// Gets all branch names from the fetched data
+  List<String> getAllBranchNames() {
+    if (branches == null) return [];
+    
+    return branches!
+        .where((branch) => branch.name != null && branch.name!.isNotEmpty)
+        .map((branch) => branch.name!)
+        .toList();
+  }
+
+  /// Gets branches filtered by location
+  List<String> getBranchesByLocation(String location) {
+    if (branches == null) return [];
+    
+    return branches!
+        .where((branch) => branch.location == location && branch.name != null)
+        .map((branch) => branch.name!)
+        .toList();
+  }
+
+  /// Gets all unique locations from branches
+  List<String> getAllLocations() {
+    if (branches == null) return [];
+    
+    return branches!
+        .where((branch) => branch.location != null && branch.location!.isNotEmpty)
+        .map((branch) => branch.location!)
+        .toSet()
+        .toList();
+  }
+
+  /// Finds a branch by name
+  BranchList? findBranchByName(String branchName) {
+    if (branches == null) return null;
+    
+    try {
+      return branches!.firstWhere((branch) => branch.name == branchName);
+    } catch (e) {
+      return null;
+    }
+  }
 }

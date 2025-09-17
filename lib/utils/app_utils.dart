@@ -167,6 +167,30 @@ class AppUtils {
     }
   }
 
+ 
+
+  /// Format time for treatment display
+  static String formatTreatmentTime(DateTime? dateTime) {
+    try {
+      if (dateTime == null) return '--';
+      return DateFormat('hh:mm a').format(dateTime);
+    } catch (e) {
+      debugPrint('Error formatting treatment time: $e');
+      return '--';
+    }
+  }
+
+  /// Format date and time for booking display
+  static String formatBookingDateTime(DateTime? dateTime) {
+    try {
+      if (dateTime == null) return '--';
+      return DateFormat('dd/MM/yyyy | hh:mm a').format(dateTime);
+    } catch (e) {
+      debugPrint('Error formatting booking date time: $e');
+      return '--';
+    }
+  }
+
   static noPatientsFound() {
     return Center(
       child: Column(

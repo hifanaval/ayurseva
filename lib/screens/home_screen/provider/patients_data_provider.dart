@@ -1,7 +1,9 @@
 import 'package:ayurseva/constants/api_urls.dart';
+import 'package:ayurseva/constants/color_class.dart';
 import 'package:ayurseva/screens/home_screen/models/patient_list_model.dart';
 import 'package:ayurseva/utils/get_service_utils.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:ayurseva/utils/app_utils.dart';
+import 'package:ayurseva/utils/pdf_generator.dart';
 import 'package:flutter/material.dart';
 
 class PatientsDataProvider extends ChangeNotifier {
@@ -137,4 +139,111 @@ class PatientsDataProvider extends ChangeNotifier {
   int get filteredPatientsCount => filteredPatients.length;
   bool get hasSearchResults => filteredPatients.isNotEmpty;
   bool get isSearching => searchQuery.isNotEmpty;
+
+  // Convert Patient data to InvoiceData for PDF generation
+  InvoiceData convertPatientToInvoiceData(Patient patient) {
+    debugPrint('PatientsDataProvider: Converting patient ${patient.id} to invoice data');
+    
+    // Parse date and time using AppUtils
+    String treatmentDate = AppUtils.formatDate(patient.dateNdTime);
+    String treatmentTime = AppUtils.formatTreatmentTime(patient.dateNdTime);
+    String bookedOn = AppUtils.formatBookingDateTime(patient.createdAt);
+    
+    // Convert treatments
+    List<TreatmentItem> treatmentItems = [];
+    if (patient.patientdetailsSet != null && patient.patientdetailsSet!.isNotEmpty) {
+      for (var detail in patient.patientdetailsSet!) {
+        final maleCount = int.tryParse(detail.male ?? '0') ?? 0;
+        final femaleCount = int.tryParse(detail.female ?? '0') ?? 0;
+        final price = double.tryParse(patient.price?.toString() ?? '0') ?? 0.0;
+        final total = price * (maleCount + femaleCount);
+        
+        treatmentItems.add(TreatmentItem(
+          name: detail.treatmentName ?? 'Unknown Treatment',
+          price: price,
+          maleCount: maleCount,
+          femaleCount: femaleCount,
+          total: total,
+        ));
+      }
+    }
+    
+    // Get branch information
+    String branchName = 'Unknown Branch';
+    String address = 'Cheepunkal P.O. Kumarakom, Kottayam, Kerala - 686563';
+    String gstNumber = '32AABCU9603R1ZW';
+    
+    if (patient.branch != null) {
+      branchName = patient.branch!.name?.name ?? 'Unknown Branch';
+      if (patient.branch!.address != null) {
+        // Convert enum to string
+        address = patient.branch!.address.toString().split('.').last.replaceAll('_', ', ');
+      }
+      gstNumber = patient.branch!.gst ?? gstNumber;
+    }
+    
+    return InvoiceData(
+      companyName: 'Amruta Ayurveda',
+      branchName: branchName,
+      address: address,
+      email: 'unknown@gmail.com',
+      phone: '+91 9876543210 | +91 9786543210',
+      gstNumber: gstNumber,
+      patientName: patient.name ?? 'Unknown Patient',
+      patientAddress: patient.address ?? 'No address provided',
+      patientWhatsApp: patient.phone ?? 'No phone provided',
+      bookedOn: bookedOn,
+      treatmentDate: treatmentDate,
+      treatmentTime: treatmentTime,
+      treatments: treatmentItems,
+      totalAmount: patient.totalAmount?.toDouble() ?? 0.0,
+      discount: patient.discountAmount?.toDouble() ?? 0.0,
+      advance: patient.advanceAmount?.toDouble() ?? 0.0,
+      balance: patient.balanceAmount?.toDouble() ?? 0.0,
+      thankYouMessage: 'Thank you for choosing us',
+      footerNote: 'Booking amount is non-refundable, and it\'s important to arrive on the allotted time for your treatment',
+    );
+  }
+
+  // Show invoice for selected patient
+  void showPatientInvoice(BuildContext context, Patient patient) {
+    debugPrint('PatientsDataProvider: Showing invoice for patient ${patient.id}');
+    
+    try {
+      final invoiceData = convertPatientToInvoiceData(patient);
+      InvoiceGenerator.generateAndShowInvoice(context, invoiceData);
+    } catch (e) {
+      debugPrint('PatientsDataProvider: Error showing invoice - $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error generating invoice: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // Handle sort change with user feedback
+  void handleSortChange(BuildContext context, String? value) {
+    if (value != null) {
+      debugPrint('PatientsDataProvider: Sorting by $value');
+      updateSortBy(value);
+      
+      // Show feedback to user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Sorted by $value'),
+          duration: const Duration(seconds: 1),
+          backgroundColor: ColorClass.primaryColor,
+        ),
+      );
+    }
+  }
+
+  // Clear search with controller reset
+  void clearSearchWithController(BuildContext context, TextEditingController searchController) {
+    debugPrint('PatientsDataProvider: Clearing search');
+    clearSearch();
+    searchController.clear();
+  }
 }

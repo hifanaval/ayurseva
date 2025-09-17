@@ -20,7 +20,7 @@ class CustomDropdown extends StatelessWidget {
   final String? labelText;
 
   const CustomDropdown({
-    Key? key,
+    super.key,
     this.value,
     required this.items,
     required this.onChanged,
@@ -29,7 +29,7 @@ class CustomDropdown extends StatelessWidget {
     this.label,
     this.hintText,
     this.labelText,
-  }) : super(key: key);
+  });
 
   // Factory constructor for inline style (original usage)
   factory CustomDropdown.inline({

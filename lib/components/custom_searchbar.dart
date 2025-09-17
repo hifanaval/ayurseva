@@ -11,13 +11,13 @@ class CustomSearchBar extends StatefulWidget {
   final VoidCallback? onClearPressed;
 
   const CustomSearchBar({
-    Key? key,
+    super.key,
     required this.controller,
     required this.hintText,
     required this.onSearchPressed,
     this.onChanged,
     this.onClearPressed,
-  }) : super(key: key);
+  });
 
   @override
   State<CustomSearchBar> createState() => _CustomSearchBarState();

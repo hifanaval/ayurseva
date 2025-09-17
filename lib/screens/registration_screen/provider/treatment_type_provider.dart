@@ -37,4 +37,44 @@ class TreatmentTypeProvider extends ChangeNotifier {
     isLoading = value;
     notifyListeners();
   }
+
+  /// Gets all active treatment names
+  List<String> getActiveTreatmentNames() {
+    return treatments
+        .where((treatment) => treatment.isActive == true && treatment.name != null)
+        .map((treatment) => treatment.name!)
+        .toSet() // Remove duplicates
+        .toList();
+  }
+
+  /// Gets all treatment names (active and inactive)
+  List<String> getAllTreatmentNames() {
+    return treatments
+        .where((treatment) => treatment.name != null)
+        .map((treatment) => treatment.name!)
+        .toSet() // Remove duplicates
+        .toList();
+  }
+
+  /// Finds a treatment by name
+  Treatment? findTreatmentByName(String treatmentName) {
+    try {
+      return treatments.firstWhere((treatment) => treatment.name == treatmentName);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Gets treatment ID by name
+  String? getTreatmentIdByName(String treatmentName) {
+    final treatment = findTreatmentByName(treatmentName);
+    return treatment?.id?.toString();
+  }
+
+  /// Checks if a treatment name is valid and active
+  bool isValidActiveTreatment(String treatmentName) {
+    return treatments.any((treatment) => 
+        treatment.name == treatmentName && 
+        treatment.isActive == true);
+  }
 }

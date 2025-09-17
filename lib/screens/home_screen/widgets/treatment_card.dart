@@ -10,10 +10,10 @@ class TreatmentCard extends StatelessWidget {
   final VoidCallback onViewDetails;
 
   const TreatmentCard({
-    Key? key,
+    super.key,
     required this.booking,
     required this.onViewDetails,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
