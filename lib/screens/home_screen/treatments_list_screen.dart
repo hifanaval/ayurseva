@@ -209,12 +209,15 @@ class _TreatmentsListScreenState extends State<TreatmentsListScreen> {
 
             
                 // Register Now Button
-                CustomButton(
-                  text: 'Register Now',
-                  onPressed: () {
-                    AppUtils.navigateTo(context, RegistrationScreen());
-                  },
-                  isLoading: false,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: CustomButton(
+                    text: 'Register Now',
+                    onPressed: () {
+                      AppUtils.navigateTo(context, RegistrationScreen());
+                    },
+                    isLoading: false,
+                  ),
                 ),
               ],
             );

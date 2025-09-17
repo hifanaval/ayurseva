@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ayurseva/screens/registration_screen/registration_screen.dart';
+import 'package:ayurseva/screens/registration_screen/provider/branch_provider.dart';
+import 'package:ayurseva/screens/registration_screen/provider/treatment_type_provider.dart';
 import 'package:intl/intl.dart';
 
 class RegistrationProvider extends ChangeNotifier {
@@ -31,9 +33,18 @@ class RegistrationProvider extends ChangeNotifier {
   // Treatment list
   List<Treatment> selectedTreatments = [];
 
-  // Sample data
-  final List<String> locations = ['Location 1', 'Location 2', 'Location 3'];
-  final List<String> branches = ['Branch 1', 'Branch 2', 'Branch 3'];
+  // Treatment selection bottom sheet variables
+  String? selectedTreatment;
+  int maleCount = 0;
+  int femaleCount = 0;
+  late List<Treatment> treatments;
+
+  // Available treatments list (will be populated from TreatmentTypeProvider)
+  List<String> availableTreatments = [];
+
+  // Data from providers
+  List<String> locations = [];
+  List<String> branches = [];
   final List<String> hours = List.generate(
     24,
     (index) => index.toString().padLeft(2, '0'),
@@ -134,11 +145,15 @@ class RegistrationProvider extends ChangeNotifier {
 
   // Dropdown update methods
   void updateLocation(String? value) {
+    print('RegistrationProvider: Updating location to: $value');
     selectedLocation = value;
+    // Reset branch selection when location changes
+    selectedBranch = null;
     notifyListeners();
   }
 
   void updateBranch(String? value) {
+    print('RegistrationProvider: Updating branch to: $value');
     selectedBranch = value;
     notifyListeners();
   }
@@ -158,15 +173,153 @@ class RegistrationProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Data fetching methods
+  Future<void> fetchBranchData(BuildContext context, BranchProvider branchProvider) async {
+    print('RegistrationProvider: Fetching branch data');
+    try {
+      await branchProvider.fetchBranchData(context);
+      
+      if (branchProvider.branches != null) {
+        // Extract unique locations from branches
+        Set<String> uniqueLocations = {};
+        List<String> branchNames = [];
+        
+        for (var branch in branchProvider.branches!) {
+          if (branch.location != null) {
+            uniqueLocations.add(branch.location!);
+          }
+          if (branch.name != null) {
+            branchNames.add(branch.name!);
+          }
+        }
+        
+        locations = uniqueLocations.toList();
+        branches = branchNames;
+        
+        print('RegistrationProvider: Branch data processed - ${locations.length} locations, ${branches.length} branches');
+        notifyListeners();
+      }
+    } catch (e) {
+      print('RegistrationProvider: Error fetching branch data - $e');
+    }
+  }
+
+  Future<void> fetchTreatmentData(BuildContext context, TreatmentTypeProvider treatmentProvider) async {
+    print('RegistrationProvider: Fetching treatment data');
+    try {
+      await treatmentProvider.fetchTreatmentData(context);
+      
+      if (treatmentProvider.treatments.isNotEmpty) {
+        availableTreatments = treatmentProvider.treatments
+            .where((treatment) => treatment.isActive == true && treatment.name != null)
+            .map((treatment) => treatment.name!)
+            .toList();
+        
+        print('RegistrationProvider: Treatment data processed - ${availableTreatments.length} active treatments');
+        notifyListeners();
+      }
+    } catch (e) {
+      print('RegistrationProvider: Error fetching treatment data - $e');
+    }
+  }
+
+  // Method to filter branches based on selected location
+  List<String> getFilteredBranches(BranchProvider branchProvider) {
+    if (selectedLocation == null || branchProvider.branches == null) {
+      return branches;
+    }
+    
+    List<String> filteredBranches = [];
+    for (var branch in branchProvider.branches!) {
+      if (branch.location == selectedLocation && branch.name != null) {
+        filteredBranches.add(branch.name!);
+      }
+    }
+    
+    print('RegistrationProvider: Filtered branches for location "$selectedLocation": ${filteredBranches.length} branches');
+    return filteredBranches;
+  }
+
   // Treatment methods
   void updateSelectedTreatments(List<Treatment> treatments) {
+    print('RegistrationProvider: Updating selected treatments with ${treatments.length} treatments');
     selectedTreatments = treatments;
     notifyListeners();
   }
 
   void removeTreatment(int index) {
+    print('RegistrationProvider: Removing treatment at index $index');
     selectedTreatments.removeAt(index);
     notifyListeners();
+  }
+
+  // Treatment selection bottom sheet methods
+  void initializeTreatmentSelection() {
+    print('RegistrationProvider: Initializing treatment selection');
+    treatments = List.from(selectedTreatments);
+    selectedTreatment = null;
+    maleCount = 0;
+    femaleCount = 0;
+    notifyListeners();
+  }
+
+  void updateSelectedTreatment(String? value) {
+    print('RegistrationProvider: Updating selected treatment to: $value');
+    selectedTreatment = value;
+    notifyListeners();
+  }
+
+  void incrementCount(bool isMale) {
+    print('RegistrationProvider: Incrementing ${isMale ? 'male' : 'female'} count');
+    if (isMale) {
+      maleCount++;
+    } else {
+      femaleCount++;
+    }
+    notifyListeners();
+  }
+
+  void decrementCount(bool isMale) {
+    print('RegistrationProvider: Decrementing ${isMale ? 'male' : 'female'} count');
+    if (isMale && maleCount > 0) {
+      maleCount--;
+    } else if (!isMale && femaleCount > 0) {
+      femaleCount--;
+    }
+    notifyListeners();
+  }
+
+  void saveTreatment() {
+    print('RegistrationProvider: Saving treatment - $selectedTreatment, Male: $maleCount, Female: $femaleCount');
+    if (selectedTreatment != null && (maleCount > 0 || femaleCount > 0)) {
+      final treatment = Treatment(
+        name: selectedTreatment!,
+        maleCount: maleCount,
+        femaleCount: femaleCount,
+      );
+
+      // Check if treatment already exists
+      final existingIndex = treatments.indexWhere(
+        (t) => t.name == selectedTreatment,
+      );
+      if (existingIndex != -1) {
+        print('RegistrationProvider: Updating existing treatment at index $existingIndex');
+        treatments[existingIndex] = treatment;
+      } else {
+        print('RegistrationProvider: Adding new treatment');
+        treatments.add(treatment);
+      }
+
+      updateSelectedTreatments(treatments);
+      
+      // Reset selection state
+      selectedTreatment = null;
+      maleCount = 0;
+      femaleCount = 0;
+      notifyListeners();
+    } else {
+      print('RegistrationProvider: Cannot save treatment - missing required data');
+    }
   }
 
   // Date selection method

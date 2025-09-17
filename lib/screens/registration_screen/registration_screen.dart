@@ -3,6 +3,8 @@ import 'package:ayurseva/components/custom_dropdown.dart';
 import 'package:ayurseva/components/custom_textfield.dart';
 import 'package:ayurseva/screens/registration_screen/widgets/treatment_selection_bottomsheet.dart';
 import 'package:ayurseva/screens/registration_screen/provider/registration_provider.dart';
+import 'package:ayurseva/screens/registration_screen/provider/branch_provider.dart';
+import 'package:ayurseva/screens/registration_screen/provider/treatment_type_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ayurseva/constants/color_class.dart';
@@ -30,6 +32,34 @@ class RegistrationScreen extends StatefulWidget {
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Fetch data when the screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchInitialData();
+    });
+  }
+
+  Future<void> _fetchInitialData() async {
+    print('RegistrationScreen: Fetching initial data');
+    final registrationProvider = Provider.of<RegistrationProvider>(context, listen: false);
+    final branchProvider = Provider.of<BranchProvider>(context, listen: false);
+    final treatmentProvider = Provider.of<TreatmentTypeProvider>(context, listen: false);
+
+    try {
+      // Fetch branch data (locations and branches)
+      await registrationProvider.fetchBranchData(context, branchProvider);
+      print('RegistrationScreen: Branch data fetched successfully');
+      
+      // Fetch treatment data
+      await registrationProvider.fetchTreatmentData(context, treatmentProvider);
+      print('RegistrationScreen: Treatment data fetched successfully');
+    } catch (e) {
+      print('RegistrationScreen: Error fetching initial data - $e');
+    }
+  }
+
   void _showTreatmentModal(BuildContext context) {
     final registrationProvider = Provider.of<RegistrationProvider>(
       context,
@@ -52,8 +82,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     return Scaffold(
       backgroundColor: ColorClass.white,
       body: SafeArea(
-        child: Consumer<RegistrationProvider>(
-          builder: (context, registrationProvider, child) {
+        child: Consumer2<RegistrationProvider, BranchProvider>(
+          builder: (context, registrationProvider, branchProvider, child) {
             return Column(
               children: [
                 // Header
@@ -141,7 +171,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             hintText: 'Select the branch',
                             labelText: 'Branch',
                             value: registrationProvider.selectedBranch,
-                            items: registrationProvider.branches,
+                            items: registrationProvider.getFilteredBranches(branchProvider),
                             onChanged: registrationProvider.updateBranch,
                             validator: registrationProvider.validateBranch,
                           ),

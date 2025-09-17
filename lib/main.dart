@@ -1,7 +1,9 @@
 import 'package:ayurseva/screens/home_screen/provider/patients_data_provider.dart';
 import 'package:ayurseva/screens/login_screen/login_screen.dart';
 import 'package:ayurseva/screens/login_screen/provider/auth_provider.dart';
+import 'package:ayurseva/screens/registration_screen/provider/branch_provider.dart';
 import 'package:ayurseva/screens/registration_screen/provider/registration_provider.dart';
+import 'package:ayurseva/screens/registration_screen/provider/treatment_type_provider.dart';
 import 'package:ayurseva/utils/shared_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -28,6 +30,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => PatientsDataProvider()),
         ChangeNotifierProvider(create: (_) => RegistrationProvider()),
+        ChangeNotifierProvider(create: (_) => BranchProvider()),
+        ChangeNotifierProvider(create: (_) => TreatmentTypeProvider()),
       ],
       child: MaterialApp(
         title: 'AyurSeva',

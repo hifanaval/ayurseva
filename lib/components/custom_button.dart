@@ -31,45 +31,42 @@ class CustomButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: SizedBox(
-        width: width ?? double.infinity,
-        height: height ?? 56,
-        child: ElevatedButton(
-          
-          onPressed: isLoading ? null : onPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: backgroundColor ?? ColorClass.primaryColor,
-            foregroundColor: textColor ?? ColorClass.white,
-            padding: padding ?? const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(borderRadius),
-            ),
-            elevation: 0,
+    return SizedBox(
+      width: width ?? double.infinity,
+      height: height ?? 56,
+      child: ElevatedButton(
+        
+        onPressed: isLoading ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: backgroundColor ?? ColorClass.primaryColor,
+          foregroundColor: textColor ?? ColorClass.white,
+          padding: padding ?? const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
           ),
-          child: isLoading
-              ? SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CupertinoActivityIndicator(
-                    color: textColor ?? ColorClass.grey,
-                  ),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (icon != null) ...[
-                      icon!,
-                      const SizedBox(width: 8),
-                    ],
-                    Text(
-                      text,
-                      style: TextStyleClass.buttonLarge(textColor ?? ColorClass.white),
-                    ),
-                  ],
-                ),
+          elevation: 0,
         ),
+        child: isLoading
+            ? SizedBox(
+                height: 20,
+                width: 20,
+                child: CupertinoActivityIndicator(
+                  color: textColor ?? ColorClass.grey,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (icon != null) ...[
+                    icon!,
+                    const SizedBox(width: 8),
+                  ],
+                  Text(
+                    text,
+                    style: TextStyleClass.buttonLarge(textColor ?? ColorClass.white),
+                  ),
+                ],
+              ),
       ),
     );
   }
