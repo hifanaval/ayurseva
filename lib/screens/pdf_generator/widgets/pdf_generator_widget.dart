@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:ayurseva/screens/pdf_generator/widgets/full_screen_pdf_viewer_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,14 +13,22 @@ import 'package:ayurseva/constants/textstyle_class.dart';
 class PdfGeneratorWidget {
   
   /// Load logo image from assets
-  static Future<pw.ImageProvider> _loadLogoImage() async {
+  static Future<pw.ImageProvider?> _loadLogoImage() async {
     try {
-      final logoData = await rootBundle.load(IconClass.logo);
-      return pw.MemoryImage(logoData.buffer.asUint8List());
+      // Try to load a PNG version of the logo first
+      // If not available, we'll use the text fallback
+      try {
+        // Try to load a PNG logo if it exists
+        final logoData = await rootBundle.load(IconClass.logoPng);
+        debugPrint('PdfGeneratorWidget: PNG logo loaded successfully');
+        return pw.MemoryImage(logoData.buffer.asUint8List());
+      } catch (pngError) {
+        debugPrint('PdfGeneratorWidget: PNG logo not found, using text fallback');
+        return null;
+      }
     } catch (e) {
       debugPrint('PdfGeneratorWidget: Error loading logo - $e');
-      // Fallback to a simple text-based logo if image loading fails
-      return pw.MemoryImage(Uint8List(0));
+      return null;
     }
   }
 
@@ -115,7 +122,7 @@ class PdfGeneratorWidget {
   }
 
   /// Build header section
-  static pw.Widget _buildHeader(InvoiceData data, pw.ImageProvider logoImage) {
+  static pw.Widget _buildHeader(InvoiceData data, pw.ImageProvider? logoImage) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -143,12 +150,19 @@ class PdfGeneratorWidget {
                     borderRadius: pw.BorderRadius.circular(30),
                   ),
                   child: pw.Center(
-                    child: pw.Image(
-                      logoImage,
-                      width: 50,
-                      height: 50,
-                      fit: pw.BoxFit.contain,
-                    ),
+                    child: logoImage != null 
+                      ? pw.Image(
+                          logoImage,
+                          width: 50,
+                          height: 50,
+                          fit: pw.BoxFit.contain,
+                        )
+                      : pw.Text(
+                          StringClass.logoText,
+                          style: _convertToPdfTextStyle(
+                            TextStyleClass.bodyMedium(ColorClass.primaryColor),
+                          ),
+                        ),
                   ),
                 ),
               ],
