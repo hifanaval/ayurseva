@@ -195,7 +195,7 @@ class _TreatmentsListScreenState extends State<TreatmentsListScreen> {
 
                 // Register Now Button
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0,vertical: 20),
                   child: CustomButton(
                     text: 'Register Now',
                     onPressed: () {

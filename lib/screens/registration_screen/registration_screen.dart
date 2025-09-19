@@ -666,7 +666,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 ),
                 // Save Button (matching treatment list screen style)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0,vertical: 20),
                   child: CustomButton(
                     text: 'Save',
                     onPressed:
