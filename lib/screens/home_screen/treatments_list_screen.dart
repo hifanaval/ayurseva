@@ -50,152 +50,173 @@ class _TreatmentsListScreenState extends State<TreatmentsListScreen> {
           builder: (context, patientsProvider, child) {
             return Column(
               children: [
-                // Header with logout button and notification
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      // Logout button
-                      Stack(
-                        children: [
-                          Icon(
-                            Icons.notifications_outlined,
-                            color: ColorClass.primaryText,
-                            size: 24,
-                          ),
-                          Positioned(
-                            right: 0,
-                            top: 0,
-                            child: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
+                // Scrollable content
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        // Header with logout button and notification
+                        Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              // Logout button
+                              Stack(
+                                children: [
+                                  Icon(
+                                    Icons.notifications_outlined,
+                                    color: ColorClass.primaryText,
+                                    size: 24,
+                                  ),
+                                  Positioned(
+                                    right: 0,
+                                    top: 0,
+                                    child: Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
+                              SizedBox(width: 10),
+                              InkWell(
+                                onTap: () {
+                                  final authProvider = Provider.of<AuthProvider>(
+                                    context,
+                                    listen: false,
+                                  );
+                                  AppUtils.showLogoutConfirmation(context, () async {
+                                    await authProvider.logout(context);
+                                  });
+                                },
+                                child: Icon(
+                                  Icons.logout,
+                                  color: ColorClass.black,
+                                  size: 20,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Search Bar
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: CustomSearchBar(
+                            controller: _searchController,
+                            hintText: 'Search for treatments',
+                            onSearchPressed:
+                                () => patientsProvider.searchPatients(
+                                  _searchController.text,
+                                ),
+                            onChanged:
+                                (query) => patientsProvider.searchPatients(query),
+                            onClearPressed: () => patientsProvider.clearSearchWithController(context, _searchController),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Sort By Dropdown
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: CustomDropdown(
+                              value: patientsProvider.selectedSortBy,
+                              items: patientsProvider.sortOptions,
+                              onChanged: (value) => patientsProvider.handleSortChange(context, value),
+                              style: CustomDropdownStyle.inline,
+                              label: 'Sort by',
                             ),
                           ),
-                        ],
-                      ),
-                      SizedBox(width: 10),
-                      InkWell(
-                        onTap: () {
-                          final authProvider = Provider.of<AuthProvider>(
-                            context,
-                            listen: false,
-                          );
-                          AppUtils.showLogoutConfirmation(context, () async {
-                            await authProvider.logout(context);
-                          });
-                        },
-                        child: Icon(
-                          Icons.logout,
-                          color: ColorClass.black,
-                          size: 20,
                         ),
-                      ),
-                    ],
-                  ),
-                ),
 
-                // Search Bar
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child:                   CustomSearchBar(
-                    controller: _searchController,
-                    hintText: 'Search for treatments',
-                    onSearchPressed:
-                        () => patientsProvider.searchPatients(
-                          _searchController.text,
-                        ),
-                    onChanged:
-                        (query) => patientsProvider.searchPatients(query),
-                    onClearPressed: () => patientsProvider.clearSearchWithController(context, _searchController),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Sort By Dropdown
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: CustomDropdown(
-                      value: patientsProvider.selectedSortBy,
-                      items: patientsProvider.sortOptions,
-                      onChanged: (value) => patientsProvider.handleSortChange(context, value),
-                      style: CustomDropdownStyle.inline,
-                      label: 'Sort by',
-                    ),
-                  ),
-                ),
-
-                // Sort info
-                if (patientsProvider.isSearching)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          '${patientsProvider.filteredPatientsCount} patients found',
-                          style: TextStyleClass.bodySmall(
-                            ColorClass.primaryText.withValues(alpha: 0.6),
+                        // Sort info
+                        if (patientsProvider.isSearching)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  '${patientsProvider.filteredPatientsCount} patients found',
+                                  style: TextStyleClass.bodySmall(
+                                    ColorClass.primaryText.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  'Sorted by ${patientsProvider.selectedSortBy}',
+                                  style: TextStyleClass.bodySmall(
+                                    ColorClass.primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          'Sorted by ${patientsProvider.selectedSortBy}',
-                          style: TextStyleClass.bodySmall(
-                            ColorClass.primaryColor,
-                          ),
-                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Treatments List
+                        patientsProvider.isLoading
+                            ? const TreatmentListShimmer()
+                            : patientsProvider.filteredPatients.isEmpty
+                            ? AppUtils.noPatientsFound()
+                            : RefreshIndicator(
+                              onRefresh:
+                                  () =>
+                                      patientsProvider.fetchPatientsData(context),
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                ),
+                                itemCount:
+                                    patientsProvider.filteredPatients.length,
+                                itemBuilder: (context, index) {
+                                  final patient =
+                                      patientsProvider.filteredPatients[index];
+                                  return TreatmentCard(
+                                    booking: patient,
+                                    onViewDetails:
+                                        () => patientsProvider.showPatientInvoice(
+                                          context,
+                                          patient,
+                                        ),
+                                  );
+                                },
+                              ),
+                            ),
+
+                        // Add bottom padding to ensure content doesn't get hidden behind the fixed button
+                        const SizedBox(height: 100),
                       ],
                     ),
                   ),
-
-                const SizedBox(height: 20),
-
-                // Treatments List
-                Expanded(
-                  child:
-                      patientsProvider.isLoading
-                          ? const TreatmentListShimmer()
-                          : patientsProvider.filteredPatients.isEmpty
-                          ? AppUtils.noPatientsFound()
-                          : RefreshIndicator(
-                            onRefresh:
-                                () =>
-                                    patientsProvider.fetchPatientsData(context),
-                            child: ListView.builder(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                              ),
-                              itemCount:
-                                  patientsProvider.filteredPatients.length,
-                              itemBuilder: (context, index) {
-                                final patient =
-                                    patientsProvider.filteredPatients[index];
-                                return TreatmentCard(
-                                  booking: patient,
-                                  onViewDetails:
-                                      () => patientsProvider.showPatientInvoice(
-                                        context,
-                                        patient,
-                                      ),
-                                );
-                              },
-                            ),
-                          ),
                 ),
 
-                // Register Now Button
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0,vertical: 20),
+                // Fixed Register Now Button at bottom
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20),
+                  decoration: BoxDecoration(
+                    color: ColorClass.white,
+                    // boxShadow: [
+                    //   BoxShadow(
+                    //     color: Colors.black.withValues(alpha: 0.1),
+                    //     blurRadius: 4,
+                    //     offset: const Offset(0, -2),
+                    //   ),
+                    // ],
+                  ),
                   child: CustomButton(
                     text: 'Register Now',
                     onPressed: () {

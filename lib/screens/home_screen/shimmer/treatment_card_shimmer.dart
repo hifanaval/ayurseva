@@ -11,10 +11,11 @@ class TreatmentListShimmer extends StatelessWidget {
       baseColor: Colors.grey[300]!,
       highlightColor: Colors.grey[100]!,
       period: const Duration(milliseconds: 1200),
-      child: ListView.builder(
+      child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: 6, // Show 6 shimmer cards
-        itemBuilder: (context, index) => const TreatmentCardShimmer(),
+        child: Column(
+          children: List.generate(6, (index) => const TreatmentCardShimmer()),
+        ),
       ),
     );
   }
